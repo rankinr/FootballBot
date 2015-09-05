@@ -1,12 +1,13 @@
-import urllib,json
-a=urllib.urlopen('http://scores.espn.go.com/college-football/scoreboard/_/group/81/year/2015/seasontype/2/').read()
-a=a[a.find('window.espn.scoreboardData'):]
+import urllib, json
+a = urllib.urlopen(
+    'http://scores.espn.go.com/college-football/scoreboard/_/group/81/year/2015/seasontype/2/').read(
+    )
+a = a[a.find('window.espn.scoreboardData'):]
 print a
-a=json.loads(a[a.find('{'):a.find('</script>')].strip())
+a = json.loads(a[a.find('{'):a.find('</script>')].strip())
 
 for b in a:
-	print b
-
+    print b
 """
 
 
