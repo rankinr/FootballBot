@@ -3,107 +3,6 @@
 """ 
 
 
-
-def mrsc(gid):
-	pg=urllib.urlopen("http://espn.go.com/ncf/playbyplay?gameId="+gid).read()
-	pg=pg[pg.find('espn.gamepackage.data = ')+len('espn.gamepackage.data = '):]
-	pg=pg[:pg.find('}};')+2]
-	try:
-		pg=json.loads(pg)
-		poss=k4v(pg['drives']['current']['plays'][0]['end']['team']['id'],db['teams'])
-		toret=pg['drives']['current']['plays'][-1]['text']+', '+pg['drives']['current']['plays'][-1]['end']['downDistanceText']+' (This drive: '+pg['drives']['current']['description']+')'
-		return [toret,poss]
-	except:
-		return ['','']
-
-def abbrev(words,abb,debug=False):
-	con=abb
-	print words
-	for throw,ws in con.iteritems():
-		#print words.lower()+'.'+ws[0].lower()+'.'
-		if ws[0] != None and words.lower().strip()==ws[0].lower().strip(): words=ws[1]
-		#if debug: print words+'.'+ws[0]+'.'+ws[1]+'.'
-	return words
-def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',supershort=False,newdb=False):
-	if not newdb: ourgame=db['games'][gm]
-	else: ourgame=newdb[gm]
-	if ourgame['status'].lower().count('pm et') != 0 or ourgame['status'].lower().count('am et') != 0: score=False
-	t1c=''
-	t2c=''
-	if color:
-		cis=artolower(db['colors'])
-		if ourgame['team1'].lower() in cis: 
-			t1c=str(cis[ourgame['team1'].lower()][0])+','+str(cis[ourgame['team1'].lower()][1])
-		if ourgame['team2'].lower() in cis: 
-			t2c=str(cis[ourgame['team2'].lower()][0])+','+str(cis[ourgame['team2'].lower()][1])
-	t1s=ourgame['team1']
-	t2s=ourgame['team2']
-	if supershort: shorts=artolower(db['supershorten'])
-	else: shorts=artolower(db['shorten'])
-	if t1s.lower() in shorts and shorts[t1s.lower()].strip() != '': t1s=shorts[t1s.lower()]
-	if t2s.lower() in shorts and shorts[t2s.lower()].strip() != '': t2s=shorts[t2s.lower()]
-	if score:
-		t1=t1s+' '+ourgame['team1score']
-		t2=t2s+' '+ourgame['team2score']
-	else:
-		t1=t1s
-		t2=t2s
-	if len(t1.split()) > 1:
-		if t1.split()[1][0]=='(': t1=t1.split()[0]
-	if len(t2.split()) > 1:
-		if t2.split()[1][0]=='(': t2=t2.split()[0]
-	rks=artolower(db['ranks'])
-	btgame=False
-#	print ourgame['team1'].lower()
-	if ourgame['team1'].lower() in rks and rks[ourgame['team1'].lower()] != None:
-		t1='('+rks[ourgame['team1'].lower()]+') '+t1
-		#print branked
-		if branked: btgame=True
-	if ourgame['team2'].lower() in rks and rks[ourgame['team2'].lower()] != None:
-		t2='('+rks[ourgame['team2'].lower()]+') '+t2
-		if branked: btgame=True
-	#print btgame
-	ntwks=''
-	if gm in db['ntwks']:
-		if db['ntwks'][gm] != '': ntwks=' - '+db['ntwks'][gm]
-	mr=''
-	if ourgame['status'].upper().count('FINAL') == 1: ntwks=''
-	status=ourgame['status']
-	if status.lower().count('am et') != 0 or status.lower().count('pm et') != 0:
-		std=status
-		stds=std[:std.find(',')]
-		std=std[std.find(',')+2:]
-		std=std[std.find(' ')+1:]
-		std=std[std.find(' ')+1:]
-		std=stds+' '+std
-		status=std
-	status=status.replace(' ET','')+ntwks
-	poss=''
-	if ourgame['status'].upper().count('FINAL') == 0 and ourgame['status'].upper().count('PM ET') == 0 and ourgame['status'].upper().count('AM ET') == 0 and showMr:
-		mrg=mrsc(ourgame['gid'])
-		poss=mrg[1]
-		if showMr: mr=': '+mrg[0]
-		if len(mr) < 5: mr=''
-	if ourgame['team1']==poss: t1=t1+' (:)'
-	elif ourgame['team2']==poss: t2=t2+' (:)'
-	if t1c != '': t1=chr(3)+t1c+t1+chr(3)
-	if t2c != '': t2=chr(3)+t2c+t2+chr(3)
-	nident=' vs. '
-	if 'neutral' in ourgame and not ourgame['neutral']: nident=' @ '
-	bt=''
-	if btgame: bt='\x02'
-	stat_to_show=ourgame['status'].strip()
-	if supershort and (stat_to_show.count('PM ET') != 0 or stat_to_show.count('AM ET') != 0):
-		stat_to_show1=stat_to_show[:stat_to_show.find(',')].strip()
-		stat_to_show2=stat_to_show[stat_to_show.find(',')+1:].strip()
-		stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
-		stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
-		stat_to_show=stat_to_show1+' '+stat_to_show2
-	if custformat != '':	
-		return custformat.replace('%BT%',bt.strip()).replace('%T1%',t1.strip()).replace('%T2%',t2.strip()).replace('%NIDENT%',nident.strip()).replace('%MR%',mr.strip()).replace('%STATUS%',stat_to_show.strip()).replace('%NTWKS%',ntwks.strip())
-	else: return bt+t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()+bt
-#			db['msgqueue'].append([t1+' '+nident+t2.strip()+mr.strip()+' '+ourgame['status']+ntwks,dest,tmtype,'score'])
-
 un_team=False
 newo=''
 
@@ -115,25 +14,6 @@ if (origin.count('|') != 0 or origin.count('[') != 0):
 		if newo.count(']') != 0: newo=newo[:newo.find(']')]
 	if  ''.join(params).strip() == '' and newo.strip() != '': params=[newo.strip()]
 	if newo.strip() != '': un_team=match(newo)
-
-def surl(url):
-	try:
-		post_url = 'https://www.googleapis.com/urlshortener/v1/url'
-		postdata = {'longUrl':url}
-		headers = {'Content-Type':'application/json'}
-		req = urllib2.Request(
-			post_url,
-			json.dumps(postdata),
-			headers
-		)
-		ret = urllib2.urlopen(req).read()
-		#print ret
-		return json.loads(ret)['id']
-	except:
-		return ''
-
-
-
 
 	
 if ''.join(params).strip() != '':
@@ -154,7 +34,7 @@ if ''.join(params).strip() != '':
 	if dest=='footballbot' or dest=='footballtestbot': dest=origin
 
 	if closests != '' and closestval <= 3:
-		db['msgqueue'].append([gameInfo(closests,True,True)+'*PR* '+surl('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*PR*',dest,tmtype,'score'])
+		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*',dest,tmtype,'score'])
 	else:
 		conf=[]
 		closest_conf=''
@@ -180,7 +60,8 @@ if ''.join(params).strip() != '':
 		conf=conf.strip()
 		if len(conf) < 10: conf=''
 		if conf != '':
-			db['msgqueue'].append([conf,dest,'PRIVMSG',None])
+			for a in splitMessage(conf):
+				db['msgqueue'].append([a,dest,'PRIVMSG',None])
 		else:
 			if ''.join(params).lower().replace(' ','') == 'top25':
 				topar=[]
@@ -210,7 +91,8 @@ if ''.join(params).strip() != '':
 					topar2.append(gameInfo(a['game'],True,False,True,False,'%BT%%T1% %NIDENT% %T2% %MR%%STATUS%%BT%',True).replace(' IN ',' ').replace('vs.','v').replace('HALFTIME','HALF').replace(' ET','').replace(' PM','').replace(' AM',''))
 				topvals=', '.join(topar2)
 				#print 'tops:'+topvals
-				db['msgqueue'].append([topvals,dest,'PRIVMSG',None])
+				for a in splitMessage(topvals,400,', '):
+					db['msgqueue'].append([a,dest,'PRIVMSG',None])
 			else:
 
 
@@ -229,13 +111,8 @@ if ''.join(params).strip() != '':
 				if dest=='footballbot' or dest=='footballtestbot': dest=origin
 
 				if closests != '' and closestval <= 3:
-					db['msgqueue'].append([gameInfo(closests,True,True,newdb=fcs)+'*PR* '+surl('http://sports.espn.go.com/ncf/boxscore?gameId='+fcs[closests]['gid'])+'*PR*',dest,tmtype,'score'])					
-					
-					
-					
-					
-					
-					
+					db['msgqueue'].append([gameInfo(closests,True,True,newdb=fcs)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+fcs[closests]['gid'])+'*',dest,tmtype,'score'])					
+
 					
 				else:
 					clv_isteam_val=100000
@@ -270,4 +147,4 @@ if ''.join(params).strip() != '':
 								
 						else:
 							db['msgqueue'].append([origin+': I do not know what team you are referring to.',dest,'PRIVMSG',None])
-		#[msg,channel (all main chans), type(privmsg),identifier(None)]
+		#[original_message,channel (all main chans), type(PRIVMSG),identifier(None)]

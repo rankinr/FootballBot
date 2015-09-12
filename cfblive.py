@@ -1,15 +1,11 @@
-if time.time()-this_loop > 1.1: print 'looplen'+str(time.time()-this_loop)
-#print 'loop'
-this_loop=time.time()
-flood_control_channel='#redditcfb' #SET CHANNEL TO DO FLOOD CONTROL ON
-flood_max_lag=2
+time.sleep(1)
+this_loop_start_time=time.time()
+
+#LOAD DATABASE
+
 if not sql.db.open or l_mysql_refresh < time.time()-3600:
 	sql=mysql()
 	l_mysql_refresh=time.time()
-db['flood_kick']=[[4,5]]
-
-##### SQL COMPATIBILITY VARIABLE SETTING
-
 
 db['language'] = {}
 if not 'msgqueue' in db: db['msgqueue']=[]
@@ -24,12 +20,8 @@ for b in a:
 		if b[0].count('language') == 0: db[b[0]]=json.loads(b[1])
 		else:
 			db['language'][b[0][b[0].find('language-')+len('language-'):]]=json.loads(b[1])
-db['blockusers']=[]	
 
 
-
-
-if len(ns_ping) == 3: ns_ping=[0,0,20,0]
 if len(mostrecentnicks) > 10: mostrecentnicks=mostrecentnicks.pop(0)
 #db['msgqueue']=[]
 mostrecentnicks=[]
@@ -49,7 +41,7 @@ for a,b in pastcmd.iteritems():
 	for c in b:
 		if c < time.time()-60: b.pop(b.index(c))
 if time.localtime()[3] == 5:
-	db['drunklevel']=0
+	sql.unique_set('data','drunklevel',str(0))
 	cursedHoya=False
 	pastcmd={}
 dlevel=0
@@ -73,24 +65,18 @@ lasterr=''
 	cursedHoya=True
 	db['msgqueue'].append([msg,"#redditcfb"])
 """
-toaddlog=[]
-upcg=[]
-for b,a in db['games'].iteritems():
-	if b != 'lastupdate':
-		st=str(a['status']).lower()
-		yr=time.strftime('%Y')
-		#if st.count('jan') != 0: yr=str(int(yr)+1)
-#		print st
-		if st.count('pm et') != 0 or st.count('am et') != 0:
-			stp=st.replace(' et','')
-			stp=time.mktime(time.strptime(stp+' '+yr,'%a, %b %d %I:%M %p %Y'))
-			#print stp-time.time()
-"""			if stp < time.time()+100 and not a['team1']+a['team2']+str(stp) in db['old_ann_upcoming']:
-				mx=' vs. '
-				if 'neutral' in a and not a['neutral']: mx=' @ '
-				upcg.append([a['team1']+mx+a['team2'],a['gid'],b])
-				db['old_ann_upcoming'].append(a['team1']+a['team2']+str(stp))
-"""
+for a,b in db['games'].iteritems():
+	if a != 'lastupdate':
+		if (b['status'].count(' AM') != 0 or b['status'].count(' PM') != 0):
+			if not b['gid'] in announced:
+				year=time.strftime('%Y')
+				tstart=time.strptime(b['status'].replace(' ET',' ')+year,"%a, %b %d %I:%M %p %Y")
+				if tstart < time.time()-3600*30*24: tstart=time.strptime(b['status'].replace(' ET',' ')+str(int(year)+1),"%a, %b %d %I:%M %p %Y")
+				tstart=time.mktime(tstart)
+				if tstart < time.time()+60*5:
+					announced.append(b['gid'])
+					db['msgqueue'].append([b['team1']+' @ '+b['team2']+' starts in 5 minutes.','#redditcfb',None,None])
+#announced=[]
 if chansold != db['config']['chans']:
 	chansold=db['config']['chans']
 	chanlist=[]
@@ -120,12 +106,6 @@ for line in lines:
 	
 	#CHECK FOR NICKSERV PING REPLY###
 	
-	cts=str(round(ns_ping[0]))
-	if cts.count('.') != 0: cts=cts[:cts.find('.')]
-	if tlana.find(':nickserv!nickserv@services. notice footballbot') == 0 and tlana.count(' acc 3') == 1:
-		user_authed=tlana[tlana.find(':nickserv!nickserv@services. notice footballbot')+len(':nickserv!nickserv@services. notice footballbot :'):tlana.find(' acc 3')]
-		if user_authed in db['join_act']:
-			s.send(db['join_act'][user_authed]['action']+'\r\n')
 	#:nickserv!nickserv@services. notice footballbot :harkatmuld acc 1
 	if ((tlana.lower().count('footballbot') != 0 or tlana.count('harkat') != 0 or tlana.count(' bot ') != 0)) and tlana.count('freenode.net') == 0 and tlana.count('PING') == 0:
 		origin=line[0][1:line[0].find('!')]
@@ -139,125 +119,117 @@ for line in lines:
 		origin=line[0][1:line[0].find('!')]
 		channel_join=line[-1]
 		#print 'user:'+origin+'.channel:'+channel_join+'.'
-		if origin in db['join_act'] and db['join_act'][origin]['channel']==channel_join: db['msgqueue'].append(['acc '+origin,'nickserv','privmsg'])
 	elif len(line) >3:
 		origin=line[0][1:line[0].find('!')]
 		dest=line[2]
-		if dest.lower()==flood_control_channel.lower(): # CHANNEL FOR FLOOD CONTROL
-			if origin in msgs_flood:
-				msgs_flood[origin].append(time.time())
-			else: msgs_flood[origin]=[time.time()]
-			last_loop=time.time()
-			#flood_hosts[origin]=line[0][line[0].find('@')+1:].strip()
 		mostrecentnicks.append(origin)
-		#if origin in db['blockusers']: db['msgqueue'].append(['You have been blocked from using FootballBot. Contact harkatmuld with any questions.',origin,None,None,False])
-		if not origin in db['blockusers']:
-			open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+origin+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
-			open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': '+origin+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
-			######################-TWITTER STATUS DISPLAY-####################
-			turl=''
-			if ' '.join(line).lower().count('reddit.com/') == 1 and ' '.join(line).lower().count('/comments/') != 0:
-				dest=line[2]
-				tl=' '.join(line)
-				turl='http://www.'+tl[tl.find('reddit.com/'):]
-				if turl.count(' ') != 0: turl=turl[:turl.find(' ')]
-				if turl[-1] == '/': turl=turl[:-1]
-				if len(turl[::-1][:turl[::-1].find('/')]) < 15:
-					r = praw.Reddit('<USERAGENT>')
-					comment = r.get_submission(turl).comments[0]
-					if dest == 'footballbot': dest=origin
-					#print comment.author
-					db['msgqueue'].append([str(comment.author)+': '+comment.body[:400]+chr(3),dest,None,None,False])
-			if ' '.join(line).count('twitter.com/') == 1 and (' '.join(line).count('/status/') == 1 or ' '.join(line).count('/statuses/') == 1) and (line[2]!='#redditcfb'):
-				for a in line:
-					if a.count('twitter.com') == 1:
-						ts=''
-						turl=a
-						if a.count('statuses') == 1: ts='statuses'
-						elif a.count('status') == 1: ts='status'
-						#print ts
-						#print a
-						tid=a[a.find(ts)+len(ts)+1:]
-						#if tid.count('/') != '': tid=tid[:tid.find('/')]
-				dest=line[2]
-				CONSUMER_KEY = ""
-				CONSUMER_SECRET = ""
-				ACCESS_KEY = ""
-				ACCESS_SECRET = ""
-				consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
-				access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
-				client = oauth.Client(consumer, access_token)
-				#print tid
-				timeline_endpoint = "https://api.twitter.com/1.1/statuses/show.json?id="+tid
-				resp = client.request(timeline_endpoint)
-				#print resp
-				response=resp[0]
-				data=resp[1]
-				#print response
-				tweets = json.loads(data)
-				#print tweets
-				#print tweets
-				#print tid
-				tweets['text']=tweets['text'].encode('ascii','ignore')
-				tweets['text']=(u''+tweets['text']).decode('utf-8')
-				txt=tweets['text'].replace('pic.twitter.com','https://pic.twitter.com')
-				repto=''
-				if 'in_reply_to_screen_name' in tweets:
-					if tweets['in_reply_to_screen_name'] != None and len(tweets['in_reply_to_screen_name']) > 1: repto=(u''+tweets['in_reply_to_screen_name']).decode('utf-8')
-				twiuser=turl[turl.find('twitter.com/')+len('twitter.com/'):]
-				twiuser=twiuser[:twiuser.find('/')]
-				if repto != '': repto=', replying to '+repto
-				db['msgqueue'].append(['@'+twiuser+repto+': '+txt+chr(3),dest,None,None,False])
-			##############
-			ful=' '.join(line)
-			if len(line[3]) > 2:
-				if line[3][1] == '$' and line[3][2].isalpha(): line[3]=':!$'+line[3][2:]
-				elif line[3][1] == '?' and line[3][2].isalpha():
-					line=line[:3]+[':!info']+line[3:]
-					if len(line) >= 4: line[4]=line[4][2:]
-					#print line
-					#				elif line[3][1] == '#' and line[3][2].isalpha():
+
+		open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+origin+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
+		open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': '+origin+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
+		######################-TWITTER STATUS DISPLAY-####################
+		turl=''
+		if ' '.join(line).lower().count('reddit.com/') == 1 and ' '.join(line).lower().count('/comments/') != 0:
+			dest=line[2]
+			tl=' '.join(line)
+			turl='http://www.'+tl[tl.find('reddit.com/'):]
+			if turl.count(' ') != 0: turl=turl[:turl.find(' ')]
+			if turl[-1] == '/': turl=turl[:-1]
+			if len(turl[::-1][:turl[::-1].find('/')]) < 15:
+				r = praw.Reddit('<USERAGENT>')
+				comment = r.get_submission(turl).comments[0]
+				if dest == 'footballbot': dest=origin
+				#print comment.author
+				db['msgqueue'].append([str(comment.author)+': '+comment.body[:400]+chr(3),dest,None,None,False])
+		if ' '.join(line).count('twitter.com/') == 1 and (' '.join(line).count('/status/') == 1 or ' '.join(line).count('/statuses/') == 1) and (line[2]!='#redditcfb'):
+			for a in line:
+				if a.count('twitter.com') == 1:
+					ts=''
+					turl=a
+					if a.count('statuses') == 1: ts='statuses'
+					elif a.count('status') == 1: ts='status'
+					#print ts
+					#print a
+					tid=a[a.find(ts)+len(ts)+1:]
+					#if tid.count('/') != '': tid=tid[:tid.find('/')]
+			dest=line[2]
+			CONSUMER_KEY = ""
+			CONSUMER_SECRET = ""
+			ACCESS_KEY = ""
+			ACCESS_SECRET = ""
+			consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
+			access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
+			client = oauth.Client(consumer, access_token)
+			#print tid
+			timeline_endpoint = "https://api.twitter.com/1.1/statuses/show.json?id="+tid
+			resp = client.request(timeline_endpoint)
+			#print resp
+			response=resp[0]
+			data=resp[1]
+			#print response
+			tweets = json.loads(data)
+			#print tweets
+			#print tweets
+			#print tid
+			tweets['text']=tweets['text'].encode('ascii','ignore')
+			tweets['text']=(u''+tweets['text']).decode('utf-8')
+			txt=tweets['text'].replace('pic.twitter.com','https://pic.twitter.com')
+			repto=''
+			if 'in_reply_to_screen_name' in tweets:
+				if tweets['in_reply_to_screen_name'] != None and len(tweets['in_reply_to_screen_name']) > 1: repto=(u''+tweets['in_reply_to_screen_name']).decode('utf-8')
+			twiuser=turl[turl.find('twitter.com/')+len('twitter.com/'):]
+			twiuser=twiuser[:twiuser.find('/')]
+			if repto != '': repto=', replying to '+repto
+			db['msgqueue'].append(['@'+twiuser+repto+': '+txt+chr(3),dest,None,None,False])
+		##############
+		ful=' '.join(line)
+		if len(line[3]) > 2:
+			if line[3][1] == '$' and line[3][2].isalpha(): line[3]=':!$'+line[3][2:]
+			elif line[3][1] == '?' and line[3][2].isalpha():
+				line=line[:3]+[':!info']+line[3:]
+				if len(line) >= 4: line[4]=line[4][2:]
+				#print line
+				#				elif line[3][1] == '#' and line[3][2].isalpha():
 #					line.append(line[3][2:])
 #					line[3]=':!stats'
-				#print pastcmd[origin]
-				#print len(pastcmd[origin])
-				allowit=True
-				if origin in pastcmd:
-					if len(pastcmd[origin]) > 4: allowit=False
-				if line[3][1]=='!' and allowit:
+			#print pastcmd[origin]
+			#print len(pastcmd[origin])
+			allowit=True
+			if origin in pastcmd:
+				if len(pastcmd[origin]) > 4: allowit=False
+			if line[3][1]=='!' and allowit:
+				#print line
+				#if origin.lower().count('ptyyy') != 0: dlevel=1000000
+				if not origin in pastcmd: pastcmd[origin]=[]
+				pastcmd[origin].append(time.time())
+				if not 'fxnsdir' in cached:
+					os.system('ls -lah /home/fbbot/cfb/fxns/ > .fxnsdir')
+					cached['fxnsdir']=open('.fxnsdir').read()
+					os.system('rm .fxnsdir')
+				if cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') == 0 and cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') == 0:
+					line[3]=line[3][2:].lower()
+					#db['msgqueue'].append([line[3][0],'harkatmuld'])
+					if line[3][0] == '$':
+						line=line[:3]+[':!spread']+line[3:]
+						line[4]=line[4][1:]
+					elif line[3][0] == '#':
+						line=line[:3]+[':!twi']+line[3:]
+						line[4]=line[4][1:]
+					elif line[3][0] == '?': line=line[:3]+[':!info']+line[3:]
+					else: line=line[:3]+[':!score']+line[3:]
 					#print line
-					#if origin.lower().count('ptyyy') != 0: dlevel=1000000
-					if not origin in pastcmd: pastcmd[origin]=[]
-					pastcmd[origin].append(time.time())
-					if not 'fxnsdir' in cached:
-						os.system('ls -lah /home/fbbot/cfb/fxns/ > .fxnsdir')
-						cached['fxnsdir']=open('.fxnsdir').read()
-						os.system('rm .fxnsdir')
-					if cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') == 0 and cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') == 0:
-						line[3]=line[3][2:].lower()
-						#db['msgqueue'].append([line[3][0],'harkatmuld'])
-						if line[3][0] == '$':
-							line=line[:3]+[':!spread']+line[3:]
-							line[4]=line[4][1:]
-						elif line[3][0] == '#':
-							line=line[:3]+[':!twi']+line[3:]
-							line[4]=line[4][1:]
-						elif line[3][0] == '?': line=line[:3]+[':!info']+line[3:]
-						else: line=line[:3]+[':!score']+line[3:]
-						#print line
-					if ' '.join(line[3:]).count('.') ==0 and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
-						origin=line[0][1:line[0].find('!')]
-						dest=line[2].lower()
-						params=line[4:]
-						params=' '.join(params).lower()
-						params=params.replace('\n','').replace('\r','')
-						params=params[:300]
-						if len(params.strip()) == 0: params=[]
-						else: params=params.split(' ')
-						if not line[3][2:].lower()+'_ucmd' in cached: cached[line[3][2:].lower()+'_ucmd']=open('/home/fbbot/cfb/fxns/'+line[3][2:].lower()+'.py').read()
-						exec cached[line[3][2:].lower()+'_ucmd']
-				#db['msgqueue'].append(['test'+str(time.time())+line[3][2:]+str(' '.join(line).count('.')),'#cfbtest'])
-	#else: open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+' '.join(line)+'\r\n')
+				if ' '.join(line[3:]).count('.') ==0 and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
+					origin=line[0][1:line[0].find('!')]
+					dest=line[2].lower()
+					params=line[4:]
+					params=' '.join(params).lower()
+					params=params.replace('\n','').replace('\r','')
+					params=params[:300]
+					if len(params.strip()) == 0: params=[]
+					else: params=params.split(' ')
+					if not line[3][2:].lower()+'_ucmd' in cached: cached[line[3][2:].lower()+'_ucmd']=open('/home/fbbot/cfb/fxns/'+line[3][2:].lower()+'.py').read()
+					exec cached[line[3][2:].lower()+'_ucmd']
+			#db['msgqueue'].append(['test'+str(time.time())+line[3][2:]+str(' '.join(line).count('.')),'#cfbtest'])
+#else: open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+' '.join(line)+'\r\n')
 #print len(db['msgqueue'])
 c=0
 for a in db['msgqueue']:
@@ -308,7 +280,8 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 	db['msgqueue'][0][0]=db['msgqueue'][0][0].encode('ascii','ignore').replace('\r','').replace('\n','')
 	if len(db['msgqueue'][0]) >=5: cursing=db['msgqueue'][0][4]
 	else: cursing=True
-	if len(db['msgqueue'][0])  >= 4: midentifier=db['msgqueue'][0][3]
+	if len(db['msgqueue'][0])  >= 4: 
+		midentifier=db['msgqueue'][0][3]
 	else: midentifier=None
 	if len(db['msgqueue'][0]) >=3:
 		if db['msgqueue'][0][2] == None: mtype='PRIVMSG'
@@ -389,7 +362,7 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 					cedit+=1
 					if len(msg) > 3 and random.randrange(0,db['drunksettings']['duplicate']['randomize']) < dlevel and dlevel > db['drunksettings']['duplicate']['min']:
 						pt=random.randrange(0,len(msg)-1)
-						if ctnums(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*PR*') == 0 or msg[pt:].count('*PR*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
+						if ctnums(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*') == 0 or msg[pt:].count('*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
 				if random.randrange(0,db['drunksettings']['slur']['randomize']) < dlevel and msg.strip().count(' ') != 0 and dlevel > db['drunksettings']['slur']['min']:
 					print 'hmph'
 					strep=0
@@ -399,7 +372,7 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 						loopcspc+=1
 						strep=random.randrange(0,len(msg))
 						enrep=strep+random.randrange(0,3)
-					if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*PR*') == 0 or msg[enrep:].count('*PR*') == 0): msg=msg[:strep]+msg[enrep:]
+					if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[enrep:].count('*') == 0): msg=msg[:strep]+msg[enrep:]
 				cedit=1
 				while cedit <= 4:
 					cedit+=3
@@ -410,22 +383,20 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 							randadd+=random.choice(['a','e','i','o','u'])
 						strep=random.randrange(0,len(msg))
 						enrep=strep+random.randrange(0,3)
-						if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*PR*') == 0 or msg[:enrep].count('*PR*') == 0): msg=msg[:strep]+randadd+msg[enrep:]
+						if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[:enrep].count('*') == 0): msg=msg[:strep]+randadd+msg[enrep:]
 				
 	#		if msg.count(chr(3)) == 0 and chan.lower() != 'nickserv': colordi=chr(3)+'0,1'	
 			h=HTMLParser()
 			if astrobob: colordi=chr(3)+'0,5'
 #			msg='test'
-			s.send(mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*PR*','').encode('ascii','ignore'))+"\r\n")
+			s.send(mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*','').encode('ascii','ignore'))+"\r\n")
 			#print mtype+" "+chan+" :"+colordi+msg.encode('ascii','ignore')
 			open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
 			#open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
 	db['msgqueue'].pop(0)
 	lastsent=time.time()
 	lastmsg=msg
-#if time.time()-this_loop > .2: print time.time()-this_loop
-
+#loop_time=time.time()-this_loop_start_time
 
 
 sql.unique_set('data','msgqueue',json.dumps(db['msgqueue']))
-time.sleep(.9)

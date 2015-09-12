@@ -22,20 +22,20 @@ db['msgqueue']=[]
 if time.time() > lloop+llen:
 	#print 'loop'
 	overallc+=1
-	thedata=urlparse.parse_qs(urllib.urlopen('http://sports.espn.go.com/'+type+'/bottomline/scores?t'+str(int(time.time()))).read())
+	thedata=urlparse.parse_qs(urllib.urlopen('http://sports.espn.go.com/ncf/bottomline/scores?t'+str(int(time.time()))).read())
 	ourgames=[]
 	thedatastr=str(thedata)
 	if len(thedatastr) > 50:
 		if thedatastr.count('FINAL') == thedatastr.count('s_left'): overallc=10000
 		for a,b in thedata.iteritems():
-			if a[:10] == type+'_s_left':
+			if a[:10] == 'ncf_s_left':
 				ourgames.append(a[10:])
 		ourgames=list(OrderedDict.fromkeys(ourgames))
 		gamedata={}
 		for game in ourgames:
 			#format: {"team1":team1,"team1score":team1score,"team2":team2,"team2score":team2score,'status':status}	
 			#thedata['ncf_s_right'+game+'_count']]
-			ourgame=thedata[type+'_s_left'+game][0]
+			ourgame=thedata['ncf_s_left'+game][0]
 			status=ourgame[::-1][1:ourgame[::-1].find('(')][::-1].strip()
 			info=ourgame[::-1][ourgame[::-1].find('(')+1:][::-1].strip()
 			while info.count('  ') != 0: info=info.replace('  ','---')
@@ -50,8 +50,8 @@ if time.time() > lloop+llen:
 			if info[0][0] == '(': t1rk=info[0][1:info[0].find(')')]
 			if info[1][0] == '(': t2rk=info[1][1:info[1].find(')')]
 			#print info[1]
-			team1=rpn(info[0]).strip()
-			team2=rpn(info[1]).strip()
+			team1=remove_rank(info[0]).strip()
+			team2=remove_rank(info[1]).strip()
 			if team1[::-1][0].isdigit() and team2[::-1][0].isdigit():
 				team1name=team1[::-1][team1[::-1].find(' ')+1:][::-1]
 				team1score=team1[::-1][:team1[::-1].find(' ')][::-1]
@@ -63,8 +63,8 @@ if time.time() > lloop+llen:
 				team2score='0'
 				team1score='0'
 			gidentifier=team1name+team2name
-			if type+'_s_url'+game in thedata:
-				game_id=thedata[type+'_s_url'+game][0][thedata[type+'_s_url'+game][0].find('gameId=')+len('gameId='):].strip()
+			if 'ncf_s_url'+game in thedata:
+				game_id=thedata['ncf_s_url'+game][0][thedata['ncf_s_url'+game][0].find('gameId=')+len('gameId='):].strip()
 			else: game_id=''
 			if game_id=='' and gidentifier in teamsold: game_id=teamsold[gidentifier]['gid']
 			elif game_id=='': game_id=str(random.randrange(0,10000000))
@@ -121,7 +121,7 @@ if time.time() > lloop+llen:
 								comm2=''
 								poss=''
 								if gddt['team2score'] > teamsold[gid]['team2score'] or gddt['team1score'] > teamsold[gid]['team1score']:
-									mrcur=mrsc(gddt['gid'])
+									mrcur=most_recent_play(gddt['gid'])
 									comm2=mrcur[0]
 									poss=mrcur[1]
 								if poss.lower() == t1name.lower(): t1=t1+' (:)'
@@ -179,7 +179,7 @@ if time.time() > lloop+llen:
 		####################
 		####################
 		#print json.dumps(gamedata)
-		if json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('AM ET') or json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('DELAYED')+json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('FINAL'):
+		if json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('AM ET') or json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('DELAYED')+json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('AM ET')+json.dumps(gamedata).count('FINAL'):
 			overallc=10000
 	else: overallc=10000
 	lloop=time.time()
