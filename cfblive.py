@@ -152,10 +152,10 @@ for line in lines:
 					tid=a[a.find(ts)+len(ts)+1:]
 					#if tid.count('/') != '': tid=tid[:tid.find('/')]
 			dest=line[2]
-			CONSUMER_KEY = ""
-			CONSUMER_SECRET = ""
-			ACCESS_KEY = ""
-			ACCESS_SECRET = ""
+			CONSUMER_KEY = "jNxRgm6c5EusOj08lyug"
+			CONSUMER_SECRET = "KxIDNsJad4AcgjpCz0LhZ3ZxYf9s8Rf97GyCclE4"
+			ACCESS_KEY = "1883859013-0b1u9AJLB7SaoEJZhNwnZMzwYlBoLuMNvVLFc6S"
+			ACCESS_SECRET = "xUT3VI7BOfnyLSyopwQJiNURpGfU92IAaKtCYoQouoKhJ"
 			consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
 			access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
 			client = oauth.Client(consumer, access_token)
@@ -171,11 +171,11 @@ for line in lines:
 			#print tweets
 			#print tid
 			tweets['text']=tweets['text'].encode('ascii','ignore')
-			tweets['text']=(u''+tweets['text']).decode('utf-8')
+			tweets['text']=(u''+tweets['text']).decode('utf8')
 			txt=tweets['text'].replace('pic.twitter.com','https://pic.twitter.com')
 			repto=''
 			if 'in_reply_to_screen_name' in tweets:
-				if tweets['in_reply_to_screen_name'] != None and len(tweets['in_reply_to_screen_name']) > 1: repto=(u''+tweets['in_reply_to_screen_name']).decode('utf-8')
+				if tweets['in_reply_to_screen_name'] != None and len(tweets['in_reply_to_screen_name']) > 1: repto=(u''+tweets['in_reply_to_screen_name']).decode('utf8')
 			twiuser=turl[turl.find('twitter.com/')+len('twitter.com/'):]
 			twiuser=twiuser[:twiuser.find('/')]
 			if repto != '': repto=', replying to '+repto
@@ -277,7 +277,7 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 	#[msg,channel (all main db['config']['chans']), type(privmsg),identifier(None)]
 	#print db['msgqueue']
 	#print db['msgqueue'][0][0]
-	db['msgqueue'][0][0]=db['msgqueue'][0][0].encode('ascii','ignore').replace('\r','').replace('\n','')
+	db['msgqueue'][0][0]=db['msgqueue'][0][0].decode('utf8').replace('\r','').replace('\n','')
 	if len(db['msgqueue'][0]) >=5: cursing=db['msgqueue'][0][4]
 	else: cursing=True
 	if len(db['msgqueue'][0])  >= 4: 
@@ -362,7 +362,7 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 					cedit+=1
 					if len(msg) > 3 and random.randrange(0,db['drunksettings']['duplicate']['randomize']) < dlevel and dlevel > db['drunksettings']['duplicate']['min']:
 						pt=random.randrange(0,len(msg)-1)
-						if ctnums(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*') == 0 or msg[pt:].count('*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
+						if count_numbers(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*') == 0 or msg[pt:].count('*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
 				if random.randrange(0,db['drunksettings']['slur']['randomize']) < dlevel and msg.strip().count(' ') != 0 and dlevel > db['drunksettings']['slur']['min']:
 					print 'hmph'
 					strep=0
@@ -372,7 +372,7 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 						loopcspc+=1
 						strep=random.randrange(0,len(msg))
 						enrep=strep+random.randrange(0,3)
-					if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[enrep:].count('*') == 0): msg=msg[:strep]+msg[enrep:]
+					if count_numbers(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[enrep:].count('*') == 0): msg=msg[:strep]+msg[enrep:]
 				cedit=1
 				while cedit <= 4:
 					cedit+=3
@@ -383,13 +383,13 @@ if len(db['msgqueue']) != 0 and time.time() > lastsent+.3:
 							randadd+=random.choice(['a','e','i','o','u'])
 						strep=random.randrange(0,len(msg))
 						enrep=strep+random.randrange(0,3)
-						if ctnums(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[:enrep].count('*') == 0): msg=msg[:strep]+randadd+msg[enrep:]
+						if count_numbers(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[:enrep].count('*') == 0): msg=msg[:strep]+randadd+msg[enrep:]
 				
 	#		if msg.count(chr(3)) == 0 and chan.lower() != 'nickserv': colordi=chr(3)+'0,1'	
 			h=HTMLParser()
 			if astrobob: colordi=chr(3)+'0,5'
 #			msg='test'
-			s.send(mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*','').encode('ascii','ignore'))+"\r\n")
+			s.send(mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*','').decode('utf8'))+"\r\n")
 			#print mtype+" "+chan+" :"+colordi+msg.encode('ascii','ignore')
 			open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
 			#open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")

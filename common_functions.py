@@ -13,6 +13,12 @@ def shorten_url(url): # returns shortened URL
 	except:
 		return ''
 
+def count_numbers(ds):
+	if re.search('[0-9]+', ds) != None:
+		return len( (re.search('[0-9]+', ds)).group() )
+	else:
+		return 0
+		
 def splitMessage(original_message,l=400,split=','): #splits message into chucnks of maximum length l, separated my most recent character split before length l is reached
 	if len(original_message) > l:
 		new_message=''
