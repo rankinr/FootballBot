@@ -2,8 +2,6 @@ lst=''
 lstar=[]
 ts=''
 nextgames={}
-
-
 for b,a in db['games'].iteritems():
 	#print a
 	if b != 'lastupdate':
@@ -24,7 +22,7 @@ for b,a in db['games'].iteritems():
 			if lst=='':
 				lst+=gameInfo(b,branked=True)
 			else:
-				lst+=' '+chr(3)+'0,1, '+chr(3)+' '+gameInfo(b,branked=True)
+				lst+=' '+chr(3)+'0,1 . '+chr(3)+' '+gameInfo(b,branked=True)
 				ts+='PRIVMSG '+origin+' :'+lst+chr(3)+'\r\n'
 #				db['msgqueue'].append([lst+chr(3),origin,'PRIVMSG'])
 				lst=''
@@ -44,7 +42,5 @@ if len(nextgames) != 0 and lst == 'There are no games on at the moment. ':
 else:
 	comb=', '.join(lstar)
 if dest=='footballbot': dest=origin
-for comb in splitMessage(comb,400,', '):
+for comb in splitMessage(comb,400,' . '):
 	db['msgqueue'].append([comb,dest])
-	print comb
-print 'sent'
