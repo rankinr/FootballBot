@@ -6,7 +6,6 @@
 un_team=False
 newo=''
 
-
 if (origin.count('|') != 0 or origin.count('[') != 0):
 	if origin.count('|') != 0: newo=origin[origin.find('|')+1:]
 	elif origin.count('[') != 0: 
@@ -92,6 +91,8 @@ if ''.join(params).strip() != '':
 				topvals=', '.join(topar2)
 				#print 'tops:'+topvals
 				for a in splitMessage(topvals,400,', '):
+					print '---'
+					print a
 					db['msgqueue'].append([a,dest,'PRIVMSG',None])
 			else:
 

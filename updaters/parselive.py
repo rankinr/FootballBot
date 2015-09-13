@@ -124,8 +124,9 @@ if time.time() > lloop+llen:
 									mrcur=most_recent_play(gddt['gid'])
 									comm2=mrcur[0]
 									poss=mrcur[1]
-								if poss.lower() == t1name.lower(): t1=t1+' (:)'
-								elif poss.lower() == t2name.lower(): t2=t2+' (:)'
+								if poss != None:
+									if poss.lower() == t1name.lower(): t1=t1+' (:)'
+									elif poss.lower() == t2name.lower(): t2=t2+' (:)'
 								if gddt['team1'].lower() in cis: t1=chr(3)+str(cis[gddt['team1'].lower()][0])+','+str(cis[gddt['team1'].lower()][1])+t1.strip()+chr(3)
 								if gddt['team2'].lower() in cis: t2=chr(3)+str(cis[gddt['team2'].lower()][0])+','+str(cis[gddt['team2'].lower()][1])+t2.strip()+chr(3)
 								if st.count('BEGIN') == 1 and st.count('1ST') == 1 and gid in db['ntwks']:

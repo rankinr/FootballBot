@@ -21,7 +21,7 @@ for b,a in db['games'].iteritems():
 				ntwks=''
 				closests=b
 				if closests in db['ntwks']: ntwks=' - '+db['ntwks'][closests]
-				if lst != '': lst+=' '+chr(3)+'1,1.'+chr(3)+' '
+				if lst != '': lst+=' '+chr(3)+'1,1 . '+chr(3)+' '
 				(t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()))
 				if (   ((t1rk == '' and t2rk != '') or (t1rk != '' and t2rk != '' and int(t1rk.replace('(','').replace(')','').strip()) > int(t2rk.replace('(','').replace(')','').strip()))) and int(ourgame['team1score']) >= int(ourgame['team2score'])) or (((      ((t2rk == '' and t1rk != '') or ((t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip())))) and int(ourgame['team2score']) >= int(ourgame['team1score'])))):
 					lst+=chr(3)+'0,4UPSET ALERT: '
@@ -31,4 +31,7 @@ if dest == 'footballbot': dest=origin
 if lst != '': ts+='PRIVMSG '+dest+' :'+lst+chr(3)+'\r\n'
 
 #db['msgqueue'].append([lst+chr(3),origin,'PRIVMSG'])
-s.send(ts)
+#s.send(ts)
+
+for msg in splitMessage(lst,400,' . '):
+	db['msgqueue'].append([msg,dest])

@@ -13,7 +13,14 @@ def shorten_url(url): # returns shortened URL
 	except:
 		return ''
 
+def count_numbers(ds):
+	if re.search('[0-9]+', ds) != None:
+		return len( (re.search('[0-9]+', ds)).group() )
+	else:
+		return 0
+		
 def splitMessage(original_message,l=400,split=','): #splits message into chucnks of maximum length l, separated my most recent character split before length l is reached
+	#print original_message
 	if len(original_message) > l:
 		new_message=''
 		original_message=original_message.split(split)
@@ -21,8 +28,9 @@ def splitMessage(original_message,l=400,split=','): #splits message into chucnks
 		c=0
 		while len(split.join(original_message)) > l and c < 5:
 			c+=1
-			while len(new_message) < l:
-				last_original_message_array=original_message
+			print 'loop'+str(c)
+			while len(new_message) < l and len(original_message) > 0:
+				last_original_message_array=original_message[:]
 				add_to_message=original_message.pop(0)
 				last_original_message=new_message
 				new_message+=add_to_message+split
@@ -30,7 +38,8 @@ def splitMessage(original_message,l=400,split=','): #splits message into chucnks
 			messages_to_send.append(last_original_message.strip())
 			original_message=last_original_message_array
 			new_message=''
-			messages_to_send[-1]=messages_to_send[-1][:-len(split)+1]
+		if len(split.join(original_message).strip()) != 0:
+			messages_to_send.append("(cont'd) "+split.join(original_message).strip())
 		return messages_to_send
 	else:
 		return [original_message]
@@ -127,12 +136,12 @@ def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',
 	else: return bt+t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()+bt
 #			db['msgqueue'].append([t1+' '+nident+t2.strip()+mr.strip()+' '+ourgame['status']+ntwks,dest,tmtype,'score'])
 
-def abbrev(words,abb,debug=False): # convert abbreviations to full
+def abbrev(words,abb,debug=False):
 	con=abb
 	for throw,ws in con.iteritems():
 		#print words.lower()+'.'+ws[0].lower()+'.'
-		if ws[0] != None and words.lower().strip()==ws[0].lower().strip(): words=ws[1]
-		#if debug: print words+'.'+ws[0]+'.'+ws[1]+'.'
+		if words.lower().strip()==ws[0].lower().strip(): words=ws[1]
+		#if debug: #print words+'.'+ws[0]+'.'+ws[1]+'.'
 	return words
 
 def stats(gid):
