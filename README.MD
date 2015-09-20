@@ -2,8 +2,4 @@ The one, the only, FootballBot, as seen in #redditcfb on FreeNode.
 
 If you have any suggestions, please let me - harkatmuld on FreeNode and Reddit - know, or push a change and I'll take a look.
 
-<<<<<<< HEAD
 Many thanks to Dublock for his assistance in troubleshooting.
-=======
-Many thanks to Dublock for his assistance in troubleshooting.
->>>>>>> origin/master
