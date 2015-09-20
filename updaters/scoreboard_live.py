@@ -183,6 +183,5 @@ if time.time() > lloop+llen:
 		if json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('AM ET') or json.dumps(gamedata).count('team1score') == json.dumps(gamedata).count('DELAYED')+json.dumps(gamedata).count('PM ET')+json.dumps(gamedata).count('AM ET')+json.dumps(gamedata).count('FINAL'):
 			overallc=10000
 	else: overallc=10000
-	os.system('python /home/fbbot/cfb/updaters/fcs.py')
 	lloop=time.time()
 	llen=random.randrange(8,12)

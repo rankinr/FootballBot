@@ -1,11 +1,8 @@
 """Looks up games by team name ("!score UMiami"), conference ("!score ACC") or time ("!score 330").
-"score" can be omitted (i.e., "!UMiami", "!ACC", or "!330" will produce the same results as above)
-""" 
-
+"score" can be omitted (i.e., "!UMiami", "!ACC", or "!330" will produce the same results as above)""" 
 
 un_team=False
 newo=''
-
 if (origin.count('|') != 0 or origin.count('[') != 0):
 	if origin.count('|') != 0: newo=origin[origin.find('|')+1:]
 	elif origin.count('[') != 0: 
@@ -19,7 +16,8 @@ if ''.join(params).strip() != '':
 	tbyname={}
 	closestval=1000000
 	closests=''
-	teams=db['games']
+	teams=db['games'].copy()
+	teams.update(db['fcs'])
 	params=abbrev(' '.join(params).lower(),db['abbreviations'])
 	for a,b in teams.iteritems():
 		if a != 'lastupdate':
@@ -31,9 +29,12 @@ if ''.join(params).strip() != '':
 				closestval=tclv
 				closests=a
 	if dest=='footballbot' or dest=='footballtestbot': dest=origin
-
 	if closests != '' and closestval <= 3:
-		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*',dest,tmtype,'score'])
+		oinfo=[]
+		if closests in db['spread'] and db['games'][closests]['status'].count(' ET') != 0: oinfo.append('\x02Spread\x02: '+db['spread'][closests])
+		oinfo=', '.join(oinfo)
+		if oinfo != '': oinfo='- '+oinfo
+		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*'+oinfo,dest,tmtype,'score'])
 	else:
 		conf=[]
 		closest_conf=''
@@ -91,8 +92,6 @@ if ''.join(params).strip() != '':
 				topvals=', '.join(topar2)
 				#print 'tops:'+topvals
 				for a in splitMessage(topvals,400,', '):
-					print '---'
-					print a
 					db['msgqueue'].append([a,dest,'PRIVMSG',None])
 			else:
 

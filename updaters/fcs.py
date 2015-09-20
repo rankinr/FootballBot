@@ -1,11 +1,32 @@
-import urllib,json
-a=urllib.urlopen('http://scores.espn.go.com/college-football/scoreboard/_/group/81/year/2015/seasontype/2/').read()
-a=a[a.find('window.espn.scoreboardData'):]
-print a
-a=json.loads(a[a.find('{'):a.find('</script>')].strip())
+import urllib,urlparse,time,random,re,traceback
+import os,json
+from bs4 import BeautifulSoup
+from mechanize import Browser
+startingat=time.time()
+from collections import OrderedDict
+from HTMLParser import HTMLParser
+exec(open('/home/fbbot/cfb/common_functions.py').read())
 
-for b in a:
-	print b
+fcs_games=getGameInfo('81')
+
+fcs={}
+
+for gid, game in fcs_games.iteritems():
+	fcs[gid]={}
+	fcs[gid]['status']=game['status']
+	fcs[gid]['team1']=game['team1']
+	fcs[gid]['team2']=game['team2']
+	fcs[gid]['team1score']=game['team1score']
+	fcs[gid]['team2score']=game['team2score']
+	fcs['hometeam']=game['hometeam']
+	fcs['neutral']=game['neutral']
+	fcs['ntwk']=game['network']
+
+
+exec(open('/home/fbbot/cfb/sload.py').read())
+
+sql.unique_set('data','fcs',json.dumps(fcs_games))	
+
 
 """
 
@@ -35,6 +56,4 @@ while a.count('<div class="game-header">') != 0:
 	
 exec(open('/home/fbbot/cfb/sload.py').read())
 
-sql.unique_set('data','fcs',json.dumps(data))	
-
-"""
+sql.unique_set('data','fcs',json.dumps(data))	"""

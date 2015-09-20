@@ -23,6 +23,8 @@ for line in lines:
 		user=line[0][1:line[0].find('!')]
 		origin=user
 		dest=line[2]
+		if not origin in user_messages: user_messages[origin]=[]
+		if dest=='#redditcfb': user_messages[origin].append(time.time())			
 		if not user in users_in_channel and dest=='#redditcfb': users_in_channel.append(user)
 
 		open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+user+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
@@ -88,9 +90,12 @@ for line in lines:
 			elif line[3][1] == '?' and line[3][2].isalpha():
 				line=line[:3]+[':!info']+line[3:]
 				if len(line) >= 4: line[4]=line[4][2:]
+			elif line[3][1] == '*':
+				line=line[:3]+[':!player']+line[3:]
+				if len(line) >= 4: line[4]=line[4][2:]
 			allowit=True
 			if user in pastcmd:
-				if len(pastcmd[user]) > 4: allowit=False
+				if len(pastcmd[user]) > 4 and user.lower().count('dublock') == 0 and user.lower().count('harkat') == 0: allowit=False
 			if line[3][1]=='!' and allowit:
 				#print line
 				#if user.lower().count('ptyyy') != 0: dlevel=1000000
@@ -109,10 +114,13 @@ for line in lines:
 					elif line[3][0] == '#':
 						line=line[:3]+[':!twi']+line[3:]
 						line[4]=line[4][1:]
+					elif line[3][0] == '*':
+						line=line[:3]+[':!player']+line[3:]
+						line[4]=line[4][1:]
 					elif line[3][0] == '?': line=line[:3]+[':!info']+line[3:]
 					else: line=line[:3]+[':!score']+line[3:]
 					#print line
-				if ' '.join(line[3:]).count('.') ==0 and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
+				if (' '.join(line[3:]).count('.') ==0 or ' '.join(line[3:]).count('!player ') != 0) and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
 					user=line[0][1:line[0].find('!')]
 					dest=line[2].lower()
 					params=line[4:]

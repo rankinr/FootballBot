@@ -51,14 +51,14 @@ def most_recent_play(gid):
 	pg=json.loads(pg)
 	try:
 		poss=k4v(str(pg['drives']['current']['plays'][0]['end']['team']['id']),db['teams'])
-		toret=pg['drives']['current']['plays'][-1]['text']+' (This drive: '+pg['drives']['current']['description']+')'
+		toret=pg['drives']['current']['plays'][-1]['text']+', '+pg['drives']['current']['plays'][0]['end']['downDistanceText']+' (This drive: '+pg['drives']['current']['description']+')'
 		return [toret,poss]
 	except:
 		return ['','']
 
 def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',supershort=False,newdb=False):
-	if not newdb: ourgame=db['games'][gm]
-	else: ourgame=newdb[gm]
+	if gm in db['games']: ourgame=db['games'][gm]
+	elif gm in db['fcs']: ourgame=db['fcs'][gm]
 	if ourgame['status'].lower().count('pm et') != 0 or ourgame['status'].lower().count('am et') != 0: score=False
 	t1c=''
 	t2c=''
@@ -87,11 +87,11 @@ def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',
 	rks=artolower(db['ranks'])
 	btgame=False
 #	print ourgame['team1'].lower()
-	if ourgame['team1'].lower() in rks and rks[ourgame['team1'].lower()] != None:
+	if ourgame['team1'].lower() in rks and rks[ourgame['team1'].lower()] != None and int(rks[ourgame['team1'].lower()]) <= 25:
 		t1='('+rks[ourgame['team1'].lower()]+') '+t1
 		#print branked
 		if branked: btgame=True
-	if ourgame['team2'].lower() in rks and rks[ourgame['team2'].lower()] != None:
+	if ourgame['team2'].lower() in rks and rks[ourgame['team2'].lower()] != None and int(rks[ourgame['team2'].lower()]) <= 25:
 		t2='('+rks[ourgame['team2'].lower()]+') '+t2
 		if branked: btgame=True
 	#print btgame
@@ -133,8 +133,40 @@ def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',
 		stat_to_show=stat_to_show1+' '+stat_to_show2
 	if custformat != '':	
 		return custformat.replace('%BT%',bt.strip()).replace('%T1%',t1.strip()).replace('%T2%',t2.strip()).replace('%NIDENT%',nident.strip()).replace('%MR%',mr.strip()).replace('%STATUS%',stat_to_show.strip()).replace('%NTWKS%',ntwks.strip())
-	else: return bt+t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()+bt
+	else:
+		toretbase=t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()
+		toretbase=toretbase.strip()
+		return bt+toretbase+bt
 #			db['msgqueue'].append([t1+' '+nident+t2.strip()+mr.strip()+' '+ourgame['status']+ntwks,dest,tmtype,'score'])
+
+def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 80 is fbs teams, typ = 81 is fcs teams)
+	scoreboard=urllib.urlopen('http://espn.go.com/college-football/scoreboard/_/group/'+typ+'/year/2015/seasontype/2/').read()
+	scoreboard=scoreboard[scoreboard.find('window.espn.scoreboardData 	= ')+len('window.espn.scoreboardData 	= '):]
+	scoreboard=json.loads(scoreboard[:scoreboard.find('}};')+2])
+	games={}
+	for event in scoreboard['events']:
+		this_game={}
+		this_game['team1']=event['competitions'][0]['competitors'][0]['team']['location']
+		this_game['team1score']=event['competitions'][0]['competitors'][0]['score']
+		this_game['team2']=event['competitions'][0]['competitors'][1]['team']['location']
+		this_game['team2score']=event['competitions'][0]['competitors'][1]['score']
+		hometeam=''
+		this_game['neutral']=True
+		if event['competitions'][0]['competitors'][0]['homeAway']=='home':
+			this_game['hometeam']=this_game['team1']
+			this_game['neutral']=False
+		elif event['competitions'][0]['competitors'][1]['homeAway']=='home':
+			hometeam=this_game['team2']
+			this_game['neutral']=False
+		this_game['gid']=event['id']
+		if 'weather' in event and 'temperature' in event['weather']: this_game['temperature']=event['weather']['temperature']
+		else: this_game['temperature']=''
+		this_game['status']=event['status']['type']['shortDetail']
+		if 'broadcasts' in event['competitions'][0]['competitors']:
+			this_game['network']=', '.join(event['competitions'][0]['competitors']['broadcasts'][0])
+		else: this_game['network']=''
+		games[this_game['team1']+this_game['team2']]=this_game
+	return games # team1, team1score, team2, team2score, hometeam, neutral, temperature, status
 
 def abbrev(words,abb,debug=False):
 	con=abb
@@ -145,19 +177,21 @@ def abbrev(words,abb,debug=False):
 	return words
 
 def stats(gid):
-	soup=BeautifulSoup(urllib.urlopen('http://espn.go.com/college-football/matchup?gameId='+gid).read(),"html5lib")
-	teams=soup.findAll('span',{'class':'chartLabel'})
-	t1=teams[0].getText()
-	t2=teams[1].getText()
-	tb=soup.find('article',{'class':'team-stats-list'})
-	tb=tb.find('table',{'class':'mod-data'})
-	rows=tb.findAll('tr')
-	stats=[]
-	for row in rows:
-		if row['class'][0]!='header':
-			cols=row.findAll('td')
-			if len(cols) > 2: stats.append(cols[0].contents[0].strip()+': '+t1+' '+cols[1].contents[0].strip()+' '+t2+' '+cols[2].contents[0].strip())
-	return ', '.join(stats)
+	try:
+		soup=BeautifulSoup(urllib.urlopen('http://espn.go.com/college-football/matchup?gameId='+gid).read(),"html5lib")
+		teams=soup.findAll('span',{'class':'chartLabel'})
+		t1=teams[0].getText()
+		t2=teams[1].getText()
+		tb=soup.find('article',{'class':'team-stats-list'})
+		tb=tb.find('table',{'class':'mod-data'})
+		rows=tb.findAll('tr')
+		stats=[]
+		for row in rows:
+			if row['class'][0]!='header':
+				cols=row.findAll('td')
+				if len(cols) > 2: stats.append(cols[0].contents[0].strip()+': '+t1+' '+cols[1].contents[0].strip()+' '+t2+' '+cols[2].contents[0].strip())
+		return ', '.join(stats)
+	except: return 'Oops! something went wrong.'
 
 def k4v(v,ar): # return key for value v in array ar
 	for a,b in ar.iteritems():

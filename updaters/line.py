@@ -31,7 +31,8 @@ for row in rows:
 			teams=row.find('td').contents
 			teams=teams[0]
 			neutral=True
-			if teams.count(' at ') == 1: 
+			print teams
+			if teams.count(' at ') == 1:
 				neutral=False
 				jnr=' at '
 			elif teams.count(' vs ') == 1: jnr=' vs '
@@ -48,11 +49,11 @@ for row in rows:
 			for col in cols:
 				colt=col.getText()
 				if colt.count('O/U') != 0:
-					print colt
+					#print colt
 					ou=colt[::-1]
 					ou=ou[ou.find('O/U'[::-1]):].strip()[::-1]
-					print ou
-			if cols[0].contents[0]=='BOVADA':
+					#print ou
+			if cols[0].contents[0]=='BETONLINE.ag':
 				c2=cols[2].renderContents()
 				c3=cols[3].renderContents()
 #				print c2
@@ -68,3 +69,4 @@ for row in rows:
 	except:
 		aewe=1
 sql.unique_set('data','spread',json.dumps(db['spread']))
+sql.unique_set('data','games',json.dumps(db['games']))

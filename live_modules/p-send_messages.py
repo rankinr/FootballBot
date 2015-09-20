@@ -89,7 +89,6 @@ while len(db['msgqueue']) != 0:
 						pt=random.randrange(0,len(msg)-1)
 						if count_numbers(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*') == 0 or msg[pt:].count('*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
 				if random.randrange(0,db['drunksettings']['slur']['randomize']) < dlevel and msg.strip().count(' ') != 0 and dlevel > db['drunksettings']['slur']['min']:
-					print 'hmph'
 					strep=0
 					enrep=0
 					loopcspc=0

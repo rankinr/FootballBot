@@ -2,7 +2,6 @@ lst=''
 lste=''
 ts=''
 for b,a in db['games'].iteritems():
-	#print a
 	if b != 'lastupdate':
 		st=str(a['status']).lower()
 		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am et') == 0 and st.count('pm et') == 0:
@@ -29,9 +28,10 @@ for b,a in db['games'].iteritems():
 				lst+=t1+'-'+t2+' ('+ourgame['status']+ntwks+')'+lste
 if dest == 'footballbot': dest=origin
 if lst != '': ts+='PRIVMSG '+dest+' :'+lst+chr(3)+'\r\n'
-
+print 'end'
 #db['msgqueue'].append([lst+chr(3),origin,'PRIVMSG'])
 #s.send(ts)
-
-for msg in splitMessage(lst,400,' . '):
-	db['msgqueue'].append([msg,dest])
+lst=lst.strip()
+if lst != '':
+	for msg in splitMessage(lst,400,' . '):
+		db['msgqueue'].append([msg,dest])

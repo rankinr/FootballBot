@@ -16,6 +16,7 @@ tmtype='PRIVMSG' # default message type is PRIVMSG
 pastcmd={} #tracks past commands that users have issued to prevent abuse
 mostrecentnicks=[] #tracks most recent users sending commands
 
+user_messages={}
 loop_count_for_updating_users=0
 db={}
 chansold={}
@@ -26,6 +27,8 @@ keepRunning=True
 lasterr=''
 lastmsg=''
 users_in_channel=[]
+
+last_alert=time.time()
 
 def lev(a,b):
     n, m = len(a), len(b)

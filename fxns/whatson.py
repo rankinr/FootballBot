@@ -3,7 +3,6 @@ lstar=[]
 ts=''
 nextgames={}
 
-
 for b,a in db['games'].iteritems():
 	#print a
 	if b != 'lastupdate':
@@ -20,11 +19,11 @@ for b,a in db['games'].iteritems():
 					nextgames.pop(mva)
 					nextgames[b]=stp
 		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am et') == 0 and st.count('pm et') == 0 and st.count('cancel') == 0:
-			lstar.append(gameInfo(b,False, False, True, True, '', True))
+			lstar.append(gameInfo(b,False, False, True, True, '', True).strip())
 			if lst=='':
-				lst+=gameInfo(b,branked=True)
+				lst+=gameInfo(b,branked=True).strip()
 			else:
-				lst+=' '+chr(3)+'0,1, '+chr(3)+' '+gameInfo(b,branked=True)
+				lst+=' '+chr(3)+'0,1, '+chr(3)+' '+gameInfo(b,branked=True).strip()
 				ts+='PRIVMSG '+origin+' :'+lst+chr(3)+'\r\n'
 #				db['msgqueue'].append([lst+chr(3),origin,'PRIVMSG'])
 				lst=''
@@ -36,7 +35,7 @@ if lst == '' and ts == '':
 ngl=''
 for a in nextgames:
 	nass=a[0]
-	ngl+=gameInfo(nass,score=False,branked=True)+', '
+	ngl+=gameInfo(nass,score=False,branked=True).strip()+', '
 ngl=ngl[:-2]
 if len(nextgames) != 0 and lst == 'There are no games on at the moment. ': 
 	lst+='\x02Upcoming games: \x02'+ngl+'\r\n'
@@ -46,5 +45,3 @@ else:
 if dest=='footballbot': dest=origin
 for comb in splitMessage(comb,400,', '):
 	db['msgqueue'].append([comb,dest])
-	print comb
-print 'sent'

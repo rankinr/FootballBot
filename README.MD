@@ -1,3 +1,5 @@
-I am an amateur coder-so if you think this code sucks, that's why.
+The one, the only, FootballBot, as seen in #redditcfb on FreeNode.
 
-I am also very open to any input - so let me know if you have any suggestions for making it work better! :) I am harkatmuld on freenode/the Reddit CFB IRC Channel, and reddit.
+If you have any suggestions, please let me - harkatmuld on FreeNode and Reddit - know, or push a change and I'll take a look.
+
+Many thanks to Dublock for his assistance in troubleshooting.

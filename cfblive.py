@@ -20,18 +20,18 @@ for module in modules:
 
 loading_times=sorted(loading_times.items(), key=operator.itemgetter(1))
 loading_times.reverse()
-os.system('clear')
-print "\r\n\r\n\r\nModule loading times:\r\n--\r\n\r\n"
+#os.system('clear')
+#print "\r\n\r\n\r\nModule loading times:\r\n--\r\n\r\n"
 total_module_load_time=0
 for a in loading_times:
-	print a[0]+': '+str(a[1])
+	#print a[0]+': '+str(a[1])
 	total_module_load_time+=a[1]
 
 overall_end_time=time.time()
-print '\r\n\r\n'
+"""print '\r\n\r\n'
 print 'Time for other processing and loading modules: '+str(overall_end_time-overall_start_time-total_module_load_time)
 print 'Total time per loop: '+str(overall_end_time-overall_start_time)
 print 'Users in channel: '
-print users_in_channel
+print users_in_channel"""
 
 #loop_time=time.time()-this_loop_start_time

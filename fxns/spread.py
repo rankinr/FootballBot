@@ -6,7 +6,6 @@ db['spread']=json.loads(sql.unique_get('data','spread'))
 if len(' '.join(params)) != ' '.join(params).count('!'):
 	def abbrev(words,abb,debug=False):
 		con=abb
-		print words
 		for throw,ws in con.iteritems():
 			#print words.lower()+'.'+ws[0].lower()+'.'
 			if ws[0] != None and words.lower().strip()==ws[0].lower().strip(): words=ws[1]
