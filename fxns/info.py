@@ -6,6 +6,18 @@ Returns team record and schedule.
 
 mech = Browser()
 
+if dest.lower()=='footballbot': msg_dest=origin
+else: msg_dest=dest
+
+user_pref=sql.get_user(origin)
+msg_type='PRIVMSG'
+if user_pref:
+	if 'cmds' in user_pref and 'info' in user_pref['cmds']:
+		if user_pref['cmds']['info']=='you': msg_dest=origin
+		elif user_pref['cmds']['info']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+	if 'pers_msgs' in user_pref and msg_dest==origin:
+		if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+		elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
 
 #what team do you want to know about?
 
@@ -37,7 +49,7 @@ if ''.join(params).strip() != '':
 	foundMatch=False
 	if closests != '' and closestval <= 3:
 		foundMatch=True
-	else: db['msgqueue'].append([origin+': Could not find that team.',dest,'PRIVMSG',None])
+	else: db['msgqueue'].append([origin+': Could not find that team.',msg_dest,msg_type,None])
 
 
 schedule=[]
@@ -64,7 +76,7 @@ if foundMatch:
 		m2s=m2s[m2s.find(':')+1:]
 		m2s=m2s[m2s.find(',')+1:]
 		m2s=m2s[m2s.find(',')+1:][::-1]
-	db['msgqueue'].append([m2s,dest,'PRIVMSG',None])
+	db['msgqueue'].append([m2s,msg_dest,msg_type,None])
 """	def gstat(d,stype):
 		d=d[d.find('<h4>'+stype+'</h4></div><div class="mod-content"><span class="stat">')+len('<h4>'+stype+'</h4></div><div class="mod-content"><span class="stat">'):]
 		stat=d[:d.find('</span')]

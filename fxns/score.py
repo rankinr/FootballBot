@@ -1,8 +1,8 @@
 """Looks up games by team name ("!score UMiami"), conference ("!score ACC") or time ("!score 330").
 "score" can be omitted (i.e., "!UMiami", "!ACC", or "!330" will produce the same results as above)""" 
-
 un_team=False
 newo=''
+exec(open('/home/fbbot/cfb/common_functions.py')) #load custom functions
 if (origin.count('|') != 0 or origin.count('[') != 0):
 	if origin.count('|') != 0: newo=origin[origin.find('|')+1:]
 	elif origin.count('[') != 0: 
@@ -12,12 +12,25 @@ if (origin.count('|') != 0 or origin.count('[') != 0):
 	if newo.strip() != '': un_team=match(newo)
 
 	
+if dest.lower()=='footballbot': msg_dest=origin
+else: msg_dest=dest
+
+user_pref=sql.get_user(origin)
+msg_type='PRIVMSG'
+if user_pref:
+	if 'cmds' in user_pref and 'score' in user_pref['cmds']:
+		if user_pref['cmds']['score']=='you': msg_dest=origin
+		elif user_pref['cmds']['score']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+	if 'pers_msgs' in user_pref and msg_dest==origin:
+		if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+		elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
+
 if ''.join(params).strip() != '':
 	tbyname={}
 	closestval=1000000
 	closests=''
-	teams=db['games'].copy()
-	teams.update(db['fcs'])
+	teams=db['games_new']['fbs'].copy()
+	teams.update(db['games_new']['fcs'])
 	params=abbrev(' '.join(params).lower(),db['abbreviations'])
 	for a,b in teams.iteritems():
 		if a != 'lastupdate':
@@ -31,10 +44,10 @@ if ''.join(params).strip() != '':
 	if dest=='footballbot' or dest=='footballtestbot': dest=origin
 	if closests != '' and closestval <= 3:
 		oinfo=[]
-		if closests in db['spread'] and db['games'][closests]['status'].count(' ET') != 0: oinfo.append('\x02Spread\x02: '+db['spread'][closests])
+		if closests in db['spread'] and db['games_new']['fbs'][closests]['status'].count(' ET') != 0: oinfo.append('\x02Spread\x02: '+db['spread'][closests])
 		oinfo=', '.join(oinfo)
 		if oinfo != '': oinfo='- '+oinfo
-		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*'+oinfo,dest,tmtype,'score'])
+		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*'+oinfo,msg_dest,msg_type,'score'])
 	else:
 		conf=[]
 		closest_conf=''
@@ -61,11 +74,11 @@ if ''.join(params).strip() != '':
 		if len(conf) < 10: conf=''
 		if conf != '':
 			for a in splitMessage(conf):
-				db['msgqueue'].append([a,dest,'PRIVMSG',None])
+				db['msgqueue'].append([a,msg_dest,msg_type,None])
 		else:
 			if ''.join(params).lower().replace(' ','') == 'top25':
 				topar=[]
-				for a,b in db['games'].iteritems():
+				for a,b in db['games_new']['fbs'].iteritems():
 					if a != 'lastupdate':
 						t1rk=26
 						t2rk=26
@@ -92,7 +105,7 @@ if ''.join(params).strip() != '':
 				topvals=', '.join(topar2)
 				#print 'tops:'+topvals
 				for a in splitMessage(topvals,400,', '):
-					db['msgqueue'].append([a,dest,'PRIVMSG',None])
+					db['msgqueue'].append([a,msg_dest,msg_type,None])
 			else:
 
 
@@ -111,7 +124,7 @@ if ''.join(params).strip() != '':
 				if dest=='footballbot' or dest=='footballtestbot': dest=origin
 
 				if closests != '' and closestval <= 3:
-					db['msgqueue'].append([gameInfo(closests,True,True,newdb=fcs)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+fcs[closests]['gid'])+'*',dest,tmtype,'score'])					
+					db['msgqueue'].append([gameInfo(closests,True,True,newdb=fcs)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+fcs[closests]['gid'])+'*',msg_dest,msg_type,'score'])					
 
 					
 				else:
@@ -123,7 +136,7 @@ if ''.join(params).strip() != '':
 							clv_isteam_val=clv_isteam
 							clv_isteam_act=a
 					if clv_isteam_val <=3:
-						db['msgqueue'].append([origin+': '+clv_isteam_act+' has a bye week (or is not a FBS team).',dest,'PRIVMSG',None])
+						db['msgqueue'].append([origin+': '+clv_isteam_act+' has a bye week (or is not a FBS team).',msg_dest,msg_type,None])
 					else:
 						numbers = re.compile('\d+(?:\.\d+)?')
 						pnum=''.join(numbers.findall(params))
@@ -142,9 +155,9 @@ if ''.join(params).strip() != '':
 							conf=conf.strip()
 							if len(conf) < 10: conf=''
 							if conf != '':
-								db['msgqueue'].append([conf,dest,'PRIVMSG',None])
-							else: db['msgqueue'].append([origin+': I can\'t find any games starting at '+pnum+'.',dest,'PRIVMSG',None])
+								db['msgqueue'].append([conf,msg_dest,msg_type,None])
+							else: db['msgqueue'].append([origin+': I can\'t find any games starting at '+pnum+'.',msg_dest,msg_type,None])
 								
 						else:
-							db['msgqueue'].append([origin+': I do not know what team you are referring to.',dest,'PRIVMSG',None])
+							db['msgqueue'].append([origin+': I do not know what team you are referring to.',msg_dest,msg_type,None])
 		#[original_message,channel (all main chans), type(PRIVMSG),identifier(None)]

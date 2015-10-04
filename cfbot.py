@@ -16,6 +16,12 @@ tmtype='PRIVMSG' # default message type is PRIVMSG
 pastcmd={} #tracks past commands that users have issued to prevent abuse
 mostrecentnicks=[] #tracks most recent users sending commands
 
+users_online=[]
+last_users_update=0
+mods_list=[]
+new_users_online=[]
+
+rcfb_msgs=[]
 user_messages={}
 loop_count_for_updating_users=0
 db={}
@@ -65,6 +71,7 @@ while keepRunning:
 		readbuffer=""
 		s=socket.socket( )
 		s.connect((db['config']['connect']['server'], int(db['config']['connect']['port'])))
+#		s.connect(('morgan.freenode.net', 6667))
 		print 'connected'
 		s.send("NICK %s\r\n" % db['config']['connect']['username'])
 		s.send("USER %s %s CFB :%s\r\n" % ("Football", "CFB", "College Football Robot"))
@@ -75,6 +82,7 @@ while keepRunning:
 		s.setblocking(0)
 		lastsent=time.time()
 	try:
+		print 'loop'
 		db['config']['refresh']=True
 		if db['config']['refresh']:
 			cached={}
@@ -88,7 +96,9 @@ while keepRunning:
 		time.sleep(.1)
 	except:
 		errr=traceback.format_exc()
-		if str(errr) != lasterr: open('logs/error.log','a').write(str(errr)+'\r\n')
+		if str(errr) != lasterr: 
+			open('logs/error.log','a').write(str(errr)+'\r\n')
+			db['msgqueue'].append([str(errr),'#cfbtest'])
 		lasterr=str(errr)
 		if errr.lower().count('socket.error') != 0 or errr.lower().count('broken pip') != 0:
 			s.close()

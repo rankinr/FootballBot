@@ -19,7 +19,7 @@ if len(' '.join(params)) != ' '.join(params).count('!'):
 		tbyname={}
 		closestval=1000000
 		closests=''
-		teams=db['games']
+		teams=db['games_new']['fbs']
 		params=abbrev(' '.join(params).lower(),db['abbreviations'])
 		for a,b in teams.iteritems():
 			if a != 'lastupdate':
@@ -30,15 +30,26 @@ if len(' '.join(params)) != ' '.join(params).count('!'):
 				if tclv < closestval:
 					closestval=tclv
 					closests=a
-		if dest=='footballbot' or dest=='footballtestbot': dest=origin
+		if dest.lower()=='footballbot': msg_dest=origin
+		else: msg_dest=dest
+
+		user_pref=sql.get_user(origin)
+		msg_type='PRIVMSG'
+		if user_pref:
+			if 'cmds' in user_pref and 'spread' in user_pref['cmds']:
+				if user_pref['cmds']['spread']=='you': msg_dest=origin
+				elif user_pref['cmds']['spread']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+			if 'pers_msgs' in user_pref and msg_dest==origin:
+				if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+				elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
 		if closests != '' and closestval <= 2:
 			tmtype='PRIVMSG'
 			neutral=True
 			nident=''
-			if 'neutral' in db['games'][closests]:
-				neutral=db['games'][closests]['neutral']
+			if 'neutral' in db['games_new']['fbs'][closests]:
+				neutral=db['games_new']['fbs'][closests]['neutral']
 			if not neutral: nident='@ '
-			if closests in db['spread'] and closests in db['games']:
+			if closests in db['spread'] and closests in db['games_new']['fbs']:
 				spdisp=db['spread'][closests].strip()
 				spdisp2=spdisp[spdisp.find(' ')+1:]
 				spdisp2=spdisp2[spdisp2.find(' ')+1:].strip()
@@ -49,13 +60,13 @@ if len(' '.join(params)) != ' '.join(params).count('!'):
 						if nident=='@ ': nitext='playing at'
 						else: nitext='over'
 						spval=spdisp[1:spdisp.find(' ')]
-						sptext=origin+': '+db['games'][closests]['team1']+' is favored by '+spval+' points '+nitext+' '+db['games'][closests]['team2']+' ('+spdisp2+')'
+						sptext=origin+': '+db['games_new']['fbs'][closests]['team1']+' is favored by '+spval+' points '+nitext+' '+db['games_new']['fbs'][closests]['team2']+' ('+spdisp2+')'
 					elif spdisp[0]=='+': 
 						if nident=='@ ': nitext='in its home game against'
 						else: nitext='over'
 						spval=spdisp[1:spdisp.find(' ')]
-						sptext=origin+': '+db['games'][closests]['team2']+' is favored by '+spval+' points '+nitext+' '+db['games'][closests]['team1']+' ('+spdisp2+')'
-				if sptext=='': sptext=origin+': '+db['games'][closests]['team1']+' '+nident+db['games'][closests]['team2']+' '+spdisp+chr(3)
-				db['msgqueue'].append([sptext,dest,tmtype,'score'])
-		else: db['msgqueue'].append([origin+': Could not find a match for this week.',dest,'PRIVMSG',None])
+						sptext=origin+': '+db['games_new']['fbs'][closests]['team2']+' is favored by '+spval+' points '+nitext+' '+db['games_new']['fbs'][closests]['team1']+' ('+spdisp2+')'
+				if sptext=='': sptext=origin+': '+db['games_new']['fbs'][closests]['team1']+' '+nident+db['games_new']['fbs'][closests]['team2']+' '+spdisp+chr(3)
+				db['msgqueue'].append([sptext,msg_dest,msg_type,'score'])
+		else: db['msgqueue'].append([origin+': Could not find a match for this week.',msg_dest,msg_type,None])
 		#[msg,channel (all main chans), type(privmsg),identifier(None)]

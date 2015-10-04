@@ -40,8 +40,8 @@ for row in rows:
 			team2=teams[teams.find(jnr)+4:teams.find(' - ')].strip()
 			if team1[0]=='#': team1=team1[team1.find(' ')+1:].strip()
 			if team2[0]=='#': team2=team2[team2.find(' ')+1:].strip()
-			if team1+team2 in db['games']: gident=team1+team2
-			elif team2+team1 in db['games']: gident=team2+team1
+			if team1+team2 in db['games_new']['fbs']: gident=team1+team2
+			elif team2+team1 in db['games_new']['fbs']: gident=team2+team1
 		else:
 			cols=row.findAll('td')
 			#if gident.count('North Carolina') != 0: print gident+cols[0].contents[0].strip()
@@ -65,8 +65,8 @@ for row in rows:
 #				print first
 #				print second
 				db['spread'][gident]=first+', '+second+', '+ou
-				db['games'][gident]['neutral']=neutral
+				db['games_new']['fbs'][gident]['neutral']=neutral
 	except:
 		aewe=1
 sql.unique_set('data','spread',json.dumps(db['spread']))
-sql.unique_set('data','games',json.dumps(db['games']))
+sql.unique_set('data','games',json.dumps(db['games_new']['fbs']))

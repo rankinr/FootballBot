@@ -28,7 +28,7 @@ def splitMessage(original_message,l=400,split=','): #splits message into chucnks
 		c=0
 		while len(split.join(original_message)) > l and c < 5:
 			c+=1
-			print 'loop'+str(c)
+			print ('loop'+str(c))
 			while len(new_message) < l and len(original_message) > 0:
 				last_original_message_array=original_message[:]
 				add_to_message=original_message.pop(0)
@@ -46,10 +46,10 @@ def splitMessage(original_message,l=400,split=','): #splits message into chucnks
 
 def most_recent_play(gid):
 	pg=urllib.urlopen("http://espn.go.com/ncf/playbyplay?gameId="+gid).read()
-	pg=pg[pg.find('espn.gamepackage.data = ')+len('espn.gamepackage.data = '):]
+	pg=pg[pg.find('var gamePackageData = ')+len('var gamePackageData = '):]
 	pg=pg[:pg.find('}};')+2]
-	pg=json.loads(pg)
 	try:
+		pg=json.loads(pg)
 		poss=k4v(str(pg['drives']['current']['plays'][0]['end']['team']['id']),db['teams'])
 		toret=pg['drives']['current']['plays'][-1]['text']+', '+pg['drives']['current']['plays'][0]['end']['downDistanceText']+' (This drive: '+pg['drives']['current']['description']+')'
 		return [toret,poss]
@@ -57,8 +57,8 @@ def most_recent_play(gid):
 		return ['','']
 
 def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',supershort=False,newdb=False):
-	if gm in db['games']: ourgame=db['games'][gm]
-	elif gm in db['fcs']: ourgame=db['fcs'][gm]
+	if gm in db['games_new']['fbs']: ourgame=db['games_new']['fbs'][gm]
+	elif gm in db['games_new']['fcs']: ourgame=db['games_new']['fcs'][gm]
 	if ourgame['status'].lower().count('pm et') != 0 or ourgame['status'].lower().count('am et') != 0: score=False
 	t1c=''
 	t2c=''
@@ -112,9 +112,9 @@ def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',
 	status=status.replace(' ET','')+ntwks
 	poss=''
 	if ourgame['status'].upper().count('FINAL') == 0 and ourgame['status'].upper().count('PM ET') == 0 and ourgame['status'].upper().count('AM ET') == 0 and showMr:
-		mrg=most_recent_play(ourgame['gid'])
-		poss=mrg[1]
-		if showMr: mr=': '+mrg[0]
+		mrg=ourgame['most_recent_play']
+		poss=ourgame['possession']
+		if showMr: mr=': '+mrg
 		if len(mr) < 5: mr=''
 	if ourgame['team1']==poss: t1=t1+' (:)'
 	elif ourgame['team2']==poss: t2=t2+' (:)'
@@ -208,7 +208,7 @@ def remove_rank(dstr): # removes ranking from team name
 def match(w): # find closest team to w
 	closestval=1000000
 	closests=''
-	teams=db['games']
+	teams=db['games_new']['fbs']
 	params=abbrev(w.lower(),db['abbreviations'],True)
 	for a,b in teams.iteritems():
 		if a != 'lastupdate':
@@ -227,17 +227,3 @@ def match(w): # find closest team to w
 	else:
 		return False
 
-
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
-
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()

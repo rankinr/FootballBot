@@ -1,7 +1,21 @@
 lst=''
 lste=''
 ts=''
-for b,a in db['games'].iteritems():
+if dest.lower()=='footballbot': msg_dest=origin
+else: msg_dest=dest
+
+user_pref=sql.get_user(origin)
+msg_type='PRIVMSG'
+if user_pref:
+	if 'cmds' in user_pref and 'closegames' in user_pref['cmds']:
+		if user_pref['cmds']['closegames']=='you': msg_dest=origin
+		elif user_pref['cmds']['closegames']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+	if 'pers_msgs' in user_pref and msg_dest==origin:
+		if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+		elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
+
+
+for b,a in db['games_new']['fbs'].iteritems():
 	if b != 'lastupdate':
 		st=str(a['status']).lower()
 		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am et') == 0 and st.count('pm et') == 0:
@@ -19,7 +33,7 @@ for b,a in db['games'].iteritems():
 				tmtype='PRIVMSG'
 				ntwks=''
 				closests=b
-				if closests in db['ntwks']: ntwks=' - '+db['ntwks'][closests]
+				if closests in db['ntwks'] and db['ntwks'][closests].strip() != '': ntwks=' - '+db['ntwks'][closests].strip()
 				if lst != '': lst+=' '+chr(3)+'1,1 . '+chr(3)+' '
 				(t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()))
 				if (   ((t1rk == '' and t2rk != '') or (t1rk != '' and t2rk != '' and int(t1rk.replace('(','').replace(')','').strip()) > int(t2rk.replace('(','').replace(')','').strip()))) and int(ourgame['team1score']) >= int(ourgame['team2score'])) or (((      ((t2rk == '' and t1rk != '') or ((t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip())))) and int(ourgame['team2score']) >= int(ourgame['team1score'])))):
@@ -34,4 +48,4 @@ print 'end'
 lst=lst.strip()
 if lst != '':
 	for msg in splitMessage(lst,400,' . '):
-		db['msgqueue'].append([msg,dest])
+		db['msgqueue'].append([msg,msg_dest,msg_type])

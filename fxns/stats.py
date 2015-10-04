@@ -9,7 +9,7 @@ if ''.join(params).strip() != '':
 	tbyname={}
 	closestval=1000000
 	closests=''
-	teams=db['games']
+	teams=db['games_new']['fbs']
 	params=abbrev(' '.join(params).lower(),db['abbreviations'])
 	for a,b in teams.iteritems():
 		if a != 'lastupdate':
@@ -20,7 +20,18 @@ if ''.join(params).strip() != '':
 			if tclv < closestval:
 				closestval=tclv
 				closests=a
-	if dest=='footballbot' or dest=='footballtestbot': dest=origin
+	if dest.lower()=='footballbot': msg_dest=origin
+	else: msg_dest=dest
+
+	user_pref=sql.get_user(origin)
+	msg_type='PRIVMSG'
+	if user_pref:
+		if 'cmds' in user_pref and 'stats' in user_pref['cmds']:
+			if user_pref['cmds']['stats']=='you': msg_dest=origin
+			elif user_pref['cmds']['stats']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+		if 'pers_msgs' in user_pref and msg_dest==origin:
+			if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+			elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
 	if closests != '' and closestval <= 2:
 		ourgame=teams[closests]
 		cis=artolower(db['colors'])
@@ -35,6 +46,6 @@ if ''.join(params).strip() != '':
 		tmtype='PRIVMSG'
 		stsm=splitMessage(stats(ourgame['gid']))
 		for sts in stsm:
-			db['msgqueue'].append([origin+': '+t1+'-'+t2+' '+sts,dest,tmtype,'score'])
-	else: db['msgqueue'].append([origin+': Could not find a match for this week...',dest,'PRIVMSG',None])
+			db['msgqueue'].append([origin+': '+t1+'-'+t2+' '+sts,msg_dest,msg_type,'score'])
+	else: db['msgqueue'].append([origin+': Could not find a match for this week...',msg_dest,msg_type,None])
 	#[msg,channel (all main chans), type(privmsg),identifier(None)]

@@ -3,7 +3,7 @@ lstar=[]
 ts=''
 nextgames={}
 
-for b,a in db['games'].iteritems():
+for b,a in db['games_new']['fbs'].iteritems():
 	#print a
 	if b != 'lastupdate':
 		st=str(a['status']).lower()
@@ -31,7 +31,6 @@ nextgames = sorted(nextgames.iteritems(), key=operator.itemgetter(1))
 lst=lst.strip()
 if lst == '' and ts == '':
 	lst='There are no games on at the moment. '
-	if dest.lower() != 'footballbot': origin=dest
 ngl=''
 for a in nextgames:
 	nass=a[0]
@@ -42,6 +41,19 @@ if len(nextgames) != 0 and lst == 'There are no games on at the moment. ':
 	comb=lst
 else:
 	comb=', '.join(lstar)
-if dest=='footballbot': dest=origin
+
+if dest.lower()=='footballbot': msg_dest=origin
+else: msg_dest=dest
+
+user_pref=sql.get_user(origin)
+msg_type='PRIVMSG'
+if user_pref:
+	if 'cmds' in user_pref and 'whatson' in user_pref['cmds']:
+		if user_pref['cmds']['whatson']=='you': msg_dest=origin
+		elif user_pref['cmds']['whatson']=='channel' and dest.lower()!='footballbot': msg_dest=dest
+	if 'pers_msgs' in user_pref and msg_dest==origin:
+		if user_pref['pers_msgs'] == 'notice': msg_type='NOTICE'
+		elif user_pref['pers_msgs'] == 'message': msg_type='PRIVMSG'
+
 for comb in splitMessage(comb,400,', '):
-	db['msgqueue'].append([comb,dest])
+	db['msgqueue'].append([comb,msg_dest,msg_type])

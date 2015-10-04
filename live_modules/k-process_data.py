@@ -6,6 +6,22 @@ for line in lines:
 	if ((tlana.lower().count('footballbot') != 0 or tlana.count('harkat') != 0 or tlana.count(' bot ') != 0)) and tlana.count('freenode.net') == 0 and tlana.count('PING') == 0:
 		user=line[0][1:line[0].find('!')]
 		if user.lower() != 'footballbot' and user.lower() != 'harkatmuld': db['msgqueue'].append([tlana,'harkatmuld',None,None,False])
+	if line[1] == '353':
+		if time.time()-last_users_update > 30: 
+			print time.time()-last_users_update
+			new_users_online=[]
+			mods_list=[]
+		users_raw=tlana[1:]
+		users_raw=users_raw[users_raw.find(':')+1:]
+		users=users_raw.split(' ')
+		for user in users:
+			if user[0]=='@' or user[0]=='+': 
+				if user[0]=='@' and not user in mods_list: mods_list.append(user)
+				user=user[1:]
+			if not user in new_users_online: new_users_online.append(user)
+		last_users_update=time.time()
+	if line[1] == '366' and line[3] != '#redditcfb':
+		users_online=new_users_online
 	if line[0].lower()=="ping":
 		s.send("PONG %s\r\n" % line[1])
 		#print "PONG %s\r\n" % line[1]
@@ -90,7 +106,7 @@ for line in lines:
 			elif line[3][1] == '?' and line[3][2].isalpha():
 				line=line[:3]+[':!info']+line[3:]
 				if len(line) >= 4: line[4]=line[4][2:]
-			elif line[3][1] == '*':
+			elif line[3][1] == '%':
 				line=line[:3]+[':!player']+line[3:]
 				if len(line) >= 4: line[4]=line[4][2:]
 			allowit=True

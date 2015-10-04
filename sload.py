@@ -22,4 +22,9 @@ class mysql:
 		a=self.cur.fetchall()
 		if len(a) == 0: return False
 		else: return a[0][0]
+	def get_user(self,username):
+		self.cur.execute("""select message_settings from me where username='%s' limit 1;""" % (MySQLdb.escape_string(username)))
+		a=self.cur.fetchall()
+		if len(a) == 0: return False
+		else: return json.loads(a[0][0])
 sql=mysql()

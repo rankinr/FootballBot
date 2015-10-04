@@ -1,7 +1,8 @@
+"""
 try:
 	curtime=time.localtime()
 
-	if time.localtime()[5] == 0:
+	if curtime[5] == 0:
 		user_teams={}
 		if curtime[3] == 4 and curtime[4] == 0: users_in_channel=[]
 		for user in users_in_channel:
@@ -66,4 +67,4 @@ try:
 except:
 	errr=traceback.format_exc()
 	if str(errr) != lasterr: open('logs/error.log','a').write('Error in generate_random_drunk_remarks module: '+str(errr)+'\r\n')
-	lasterr=str(errr)
+	lasterr=str(errr)"""

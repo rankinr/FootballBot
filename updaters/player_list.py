@@ -19,5 +19,6 @@ for team,tid in teams.iteritems():
 			if player.a['href'] != None: player_url=player.a['href']
 			else: player_url=''
 			player_name=player.getText()
-			players.append([player_name,player_url])
+			par=[player_name,player_url,team]
+			if not par in players: players.append(par)
 open('/home/fbbot/cfb/players.list','w').write(json.dumps(players))
