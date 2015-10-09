@@ -28,7 +28,7 @@ def splitMessage(original_message,l=400,split=','): #splits message into chucnks
 		c=0
 		while len(split.join(original_message)) > l and c < 5:
 			c+=1
-			print ('loop'+str(c))
+			#print ('loop'+str(c))
 			while len(new_message) < l and len(original_message) > 0:
 				last_original_message_array=original_message[:]
 				add_to_message=original_message.pop(0)
@@ -169,12 +169,16 @@ def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 8
 	return games # team1, team1score, team2, team2score, hometeam, neutral, temperature, status
 
 def abbrev(words,abb,debug=False):
-	con=abb
-	for throw,ws in con.iteritems():
-		#print words.lower()+'.'+ws[0].lower()+'.'
-		if words.lower().strip()==ws[0].lower().strip(): words=ws[1]
-		#if debug: #print words+'.'+ws[0]+'.'+ws[1]+'.'
-	return words
+	if words == None:
+		return ''
+	else:
+		con=abb
+		for throw,ws in con.iteritems():
+			#print words.lower()+'.'+ws[0].lower()+'.'
+			if ws[0] != None:
+				if words.lower().strip()==ws[0].lower().strip(): words=ws[1]
+			#if debug: #print words+'.'+ws[0]+'.'+ws[1]+'.'
+		return words
 
 def stats(gid):
 	try:
@@ -202,6 +206,11 @@ def artolower(art): #make all values in array lowercase
 	newar={}
 	for a,b in art.iteritems(): newar[a.lower()]=b
 	return newar
+def lsttolower(art): #make all values in array lowercase
+	newar=[]
+	for a in art: newar.append(a.lower())
+	return newar
+
 def remove_rank(dstr): # removes ranking from team name
 	return re.sub(r'\([0-9)]*\)', '',dstr).strip()
 	

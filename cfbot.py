@@ -33,6 +33,7 @@ keepRunning=True
 lasterr=''
 lastmsg=''
 users_in_channel=[]
+lasterrl=''
 
 last_alert=time.time()
 
@@ -98,7 +99,9 @@ while keepRunning:
 		errr=traceback.format_exc()
 		if str(errr) != lasterr: 
 			open('logs/error.log','a').write(str(errr)+'\r\n')
-			db['msgqueue'].append([str(errr),'#cfbtest'])
+			errd=str(errr)
+			errd=errd[errd.find(':')+1:].replace('\n',' ').replace('\r','').strip()
+			s.send('PRIVMSG #cfbtest : harkatmuld, there is an error: '+errd)
 		lasterr=str(errr)
 		if errr.lower().count('socket.error') != 0 or errr.lower().count('broken pip') != 0:
 			s.close()

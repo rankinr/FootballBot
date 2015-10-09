@@ -39,7 +39,9 @@ while len(db['msgqueue']) != 0:
 		if 'all' in mchannel:
 			for a in mchannel['all']:
 				if sendto.count(a) == 0: sendto.append(a)
+		#print '4'
 		for chan in sendto:
+			#print '5'
 			if chan == '#redditcfb' and len(rcfb_msgs) > 3:
 				for msg_time in rcfb_msgs:
 					if time.time()-msg_time > 9:
@@ -114,7 +116,6 @@ while len(db['msgqueue']) != 0:
 							strep=random.randrange(0,len(msg))
 							enrep=strep+random.randrange(0,3)
 							if count_numbers(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[:enrep].count('*') == 0): msg=msg[:strep]+randadd+msg[enrep:]
-					
 		#		if msg.count(chr(3)) == 0 and chan.lower() != 'nickserv': colordi=chr(3)+'0,1'	
 				h=HTMLParser()
 	#			msg='test'
@@ -124,5 +125,8 @@ while len(db['msgqueue']) != 0:
 				#print mtype+" "+chan+" :"+colordi+msg.encode('ascii','ignore')
 				open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
 				#open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
+	else:
+		if msg == '': db['msgqueue'].pop(0)
+		else: print '?'
 	lastsent=time.time()
 	lastmsg=msg

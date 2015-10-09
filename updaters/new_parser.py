@@ -1,5 +1,5 @@
 import urllib,time,random,re,traceback
-import os,json
+import os,json,sys
 from bs4 import BeautifulSoup
 start_time=time.time()
 from collections import OrderedDict
@@ -18,6 +18,36 @@ lastGames=json.loads(sql.unique_get('data','games_new')) #when you loop this, yo
 db['games_new']=lastGames
 rks=artolower(json.loads(sql.unique_get('data','ranks')))
 
+start_load_updates=time.time()
+
+sql.cur.execute("""select username,following from me;""" )
+a=sql.cur.fetchall()
+
+list_of_updates={}
+
+teams_to_games={}
+for game in db['games_new']['fbs']:
+	teams_to_games[db['games_new']['fbs'][game]['team1']]=game
+	teams_to_games[db['games_new']['fbs'][game]['team2']]=game
+for game in db['games_new']['fcs']:
+	teams_to_games[db['games_new']['fcs'][game]['team1']]=game
+	teams_to_games[db['games_new']['fcs'][game]['team2']]=game
+	
+for user in a: #user[0] = username, [1] = following
+	if user[1].strip() != '':
+		uinfo=json.loads(user[1])
+		for team in uinfo['teams']:
+			if team in teams_to_games:
+				if not teams_to_games[team] in list_of_updates:
+					list_of_updates[teams_to_games[team]]=[]
+				if not user[0] in   list_of_updates[teams_to_games[team]]: list_of_updates[teams_to_games[team]].append(user[0])
+		for game in uinfo['this_week']:
+			if not game in list_of_updates:
+				list_of_updates[game]=[]
+			if not user[0] in   list_of_updates[game]: list_of_updates[game].append(user[0])
+
+print 'Total time to load users to update: '+str(time.time()-start_load_updates)
+print list_of_updates
 
 def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 80 is fbs teams, typ = 81 is fcs teams)
 	scoreboard=urllib.urlopen('http://espn.go.com/college-football/scoreboard/_/group/'+typ+'/year/2015/seasontype/2/?t='+str(time.time())).read()
@@ -63,6 +93,7 @@ def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 8
 keepGoing=True
 try:
 	while keepGoing:
+		play_updates=[]
 		#Get our games
 		games={}
 		games['fcs']=getGameInfo('81')
@@ -146,6 +177,8 @@ try:
 				#	sql.unique_set('data','msgqueue',json.dumps(db['msgqueue']))
 				#new scores/big changes
 				if gid in lastGames['fbs'] and gddt != lastGames['fbs'][gid]:
+					if gddt['most_recent_play'] != lastGames['fbs'][gid]['most_recent_play'] and gid in list_of_updates:
+						play_updates.append(gid)
 					if (((gddt['status'].upper().count('FINAL')==1  or gddt['status'].upper().count('OT') == 1 or gddt['status'].upper().count('15:00') != 0 or gddt['status'].upper().count('HALFTIME') != 0) and gddt['status'] != lastGames['fbs'][gid]['status']) or ((gddt['team1score'] > lastGames['fbs'][gid]['team1score']	or gddt['team2score'] > lastGames['fbs'][gid]['team2score']) and not score_code in scores_already_sent)):				
 						if not msg in msgs_already_sent:
 							db['msgqueue']=json.loads(sql.unique_get('data','msgqueue'))
@@ -153,11 +186,20 @@ try:
 							sql.unique_set('data','msgqueue',json.dumps(db['msgqueue']))
 							msgs_already_sent.append(msg)
 							scores_already_sent.append(score_code)
-		if json.dumps(games).count('team1score') == json.dumps(games).count('PM ET')+json.dumps(games).count('AM ET') or json.dumps(games).count('team1score') == json.dumps(games).count('DELAYED')+json.dumps(games).count('PM ET')+json.dumps(games).count('AM ET')+json.dumps(games).count('FINAL'):
+			for gid,gddt in games['fcs'].iteritems():
+				if gid in lastGames['fcs'] and gddt != lastGames['fcs'][gid] and gddt['most_recent_play'] != lastGames['fcs'][gid]['most_recent_play'] and gid in list_of_updates:
+					play_updates.append(gid)
+		if json.dumps(games).count('team1score') == json.dumps(games).count('PM EDT')+json.dumps(games).count('AM EDT') or json.dumps(games).count('team1score') == json.dumps(games).count('DELAYED')+json.dumps(games).count('PM EDT')+json.dumps(games).count('AM EDT')+json.dumps(games).count('FINAL'):
 			start_time=0
 		if time.time() > start_time+60*4.8:
 			keepGoing=False
 		lastGames=games
+		if len(play_updates) > 0:
+			play_updates_f={}
+			for game in play_updates:
+				play_updates_f[game]=list_of_updates[game]
+			print play_updates_f
+			sql.unique_set('data','play_updates',json.dumps(play_updates_f))
 		time.sleep(random.randrange(8,13))
 except:
 	errr=str(traceback.format_exc().replace('\n',''))

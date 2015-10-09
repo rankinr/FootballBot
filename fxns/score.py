@@ -2,7 +2,6 @@
 "score" can be omitted (i.e., "!UMiami", "!ACC", or "!330" will produce the same results as above)""" 
 un_team=False
 newo=''
-exec(open('/home/fbbot/cfb/common_functions.py')) #load custom functions
 if (origin.count('|') != 0 or origin.count('[') != 0):
 	if origin.count('|') != 0: newo=origin[origin.find('|')+1:]
 	elif origin.count('[') != 0: 
@@ -47,7 +46,7 @@ if ''.join(params).strip() != '':
 		if closests in db['spread'] and db['games_new']['fbs'][closests]['status'].count(' ET') != 0: oinfo.append('\x02Spread\x02: '+db['spread'][closests])
 		oinfo=', '.join(oinfo)
 		if oinfo != '': oinfo='- '+oinfo
-		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*'+oinfo,msg_dest,msg_type,'score'])
+		db['msgqueue'].append([gameInfo(closests,True,True)+'* '+shorten_url('http://sports.espn.go.com/ncf/boxscore?gameId='+teams[closests]['gid'])+'*'+oinfo+' (Interested in getting updates on this team? Try the !me command.)',msg_dest,msg_type,'score'])
 	else:
 		conf=[]
 		closest_conf=''

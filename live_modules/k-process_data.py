@@ -1,5 +1,6 @@
 for line in lines:
 	tlana=' '.join(line)
+	#print line
 	#CHECK FOR NICKSERV PING REPLY###
 	
 	#:nickserv!nickserv@services. notice footballbot :harkatmuld acc 1
@@ -35,6 +36,17 @@ for line in lines:
 		channel_part=line[-2].strip()
 		while user in users_in_channel:
 			users_in_channel.remove(user)
+	elif line[1]=='NICK':
+		user=line[0][1:line[0].find('!')]
+		newnick=line[2][1:]
+		sql.cur.execute("""select username from me;""" )
+		a=sql.cur.fetchall()
+		list_of_users=[]
+		for usern in a: #user[0] = username, [1] = following
+			list_of_users.append(usern[0])
+		if user in list_of_users:
+			sql.cur.execute("""update me set username='"""+MySQLdb.escape_string(newnick)+"""' where username='"""+MySQLdb.escape_string(user)+"""' limit 1;""")
+			print """update me set username='"""+MySQLdb.escape_string(newnick)+"""' where username='"""+MySQLdb.escape_string(user)+"""' limit 1;"""
 	elif len(line) >3:
 		user=line[0][1:line[0].find('!')]
 		origin=user

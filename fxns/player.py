@@ -49,8 +49,8 @@ if len(closest_vals) > 1:
 	message='Please be more specific, there are multiple matches: '+', '.join(closest_vals)
 	if len(message) > 400:
 		for msg in splitMessage(message):
-			db['msgqueue'].append([msg,origin])
-	else: db['msgqueue'].append([message,origin])
+			db['msgqueue'].append([msg,msg_dest])
+	else: db['msgqueue'].append([message,msg_dest])
 else:
 	if closest_match_url != '' and closest_val <= 10:
 		player=BeautifulSoup(urllib.urlopen(closest_match_url),"html5lib")
@@ -90,4 +90,4 @@ else:
 						lc+=1
 					texts.append(thisrowtext+', '.join(thisrow))
 			db['msgqueue'].append([closest_match_name+' ('+closest_match_school+'): '+'; '.join(texts),msg_dest,msg_type])
-		else: db['msgqueue'].append(['Sorry, something went wrong. Please let harkatmuld know.',origin])
+		else: db['msgqueue'].append(['Sorry, something went wrong. Please let harkatmuld know.',msg_dest])

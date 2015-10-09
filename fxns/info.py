@@ -58,6 +58,7 @@ if foundMatch:
 	page = mech.open('http://espn.go.com/college-football/team/schedule/_/id/'+str(teams[closests]))
 	html = page.read()
 	soup = BeautifulSoup(html)
+	record=soup.find('div',{'class':'sub-title'}).getText()
 	table = soup.find("table", attrs={'class':'tablehead'})
 	rows=table.findAll('tr',attrs={'class':['evenrow','oddrow']})
 	for row in rows:
@@ -70,7 +71,7 @@ if foundMatch:
 			opp2=opp2[opp2.find(' '):].strip()
 			opp=opp[:opp.find('#')].strip()+' '+opp2
 		schedule.append(date+': '+opp)
-	m2s='Schedule for '+closests+': '+', '.join(schedule)
+	m2s=closests+': \x02Record:\x02 '+record+' \x02Schedule:\x02 '+', '.join(schedule)
 	if len(m2s) > 320:
 		m2s=m2s[:320][::-1]
 		m2s=m2s[m2s.find(':')+1:]
