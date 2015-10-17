@@ -12,7 +12,20 @@ def shorten_url(url): # returns shortened URL
 		return json.loads(ret)['id']
 	except:
 		return ''
-
+def keywords(line,keywords):
+	all=True
+	line=line.lower()
+	for keyword in keywords:
+		if line.count(keyword.lower()) == 0:
+			all=False
+		else: line=line[line.find(keyword.lower())+len(keyword):]
+	return all
+def remove_text(line,torem):
+	line=line.lower()
+	for rem in torem:
+		line=line.replace(rem.lower(),'  ')
+	while line.count('  ') != 0: line=line.replace('  ',' ')
+	return line.strip()
 def count_numbers(ds):
 	if re.search('[0-9]+', ds) != None:
 		return len( (re.search('[0-9]+', ds)).group() )
@@ -56,88 +69,93 @@ def most_recent_play(gid):
 	except:
 		return ['','']
 
-def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',supershort=False,newdb=False):
+def gameInfo(gm,color=False,showMr=False,score=True,branked=False,custformat='',supershort=False,newdb=False,typ_of_text=''):
 	if gm in db['games_new']['fbs']: ourgame=db['games_new']['fbs'][gm]
 	elif gm in db['games_new']['fcs']: ourgame=db['games_new']['fcs'][gm]
-	if ourgame['status'].lower().count('pm et') != 0 or ourgame['status'].lower().count('am et') != 0: score=False
-	t1c=''
-	t2c=''
-	if color:
-		cis=artolower(db['colors'])
-		if ourgame['team1'].lower() in cis: 
-			t1c=str(cis[ourgame['team1'].lower()][0])+','+str(cis[ourgame['team1'].lower()][1])
-		if ourgame['team2'].lower() in cis: 
-			t2c=str(cis[ourgame['team2'].lower()][0])+','+str(cis[ourgame['team2'].lower()][1])
-	t1s=ourgame['team1']
-	t2s=ourgame['team2']
-	if supershort: shorts=artolower(db['supershorten'])
-	else: shorts=artolower(db['shorten'])
-	if t1s.lower() in shorts and shorts[t1s.lower()].strip() != '': t1s=shorts[t1s.lower()]
-	if t2s.lower() in shorts and shorts[t2s.lower()].strip() != '': t2s=shorts[t2s.lower()]
-	if score:
-		t1=t1s+' '+ourgame['team1score']
-		t2=t2s+' '+ourgame['team2score']
-	else:
-		t1=t1s
-		t2=t2s
-	if len(t1.split()) > 1:
-		if t1.split()[1][0]=='(': t1=t1.split()[0]
-	if len(t2.split()) > 1:
-		if t2.split()[1][0]=='(': t2=t2.split()[0]
-	rks=artolower(db['ranks'])
-	btgame=False
-#	print ourgame['team1'].lower()
-	if ourgame['team1'].lower() in rks and rks[ourgame['team1'].lower()] != None and int(rks[ourgame['team1'].lower()]) <= 25:
-		t1='('+rks[ourgame['team1'].lower()]+') '+t1
-		#print branked
-		if branked: btgame=True
-	if ourgame['team2'].lower() in rks and rks[ourgame['team2'].lower()] != None and int(rks[ourgame['team2'].lower()]) <= 25:
-		t2='('+rks[ourgame['team2'].lower()]+') '+t2
-		if branked: btgame=True
-	#print btgame
-	ntwks=''
-	if gm in db['ntwks']:
-		if db['ntwks'][gm] != '': ntwks=' - '+db['ntwks'][gm]
-	mr=''
-	if ourgame['status'].upper().count('FINAL') == 1: ntwks=''
-	status=ourgame['status']
-	if status.lower().count('am et') != 0 or status.lower().count('pm et') != 0:
-		std=status
-		stds=std[:std.find(',')]
-		std=std[std.find(',')+2:]
-		std=std[std.find(' ')+1:]
-		std=std[std.find(' ')+1:]
-		std=stds+' '+std
-		status=std
-	status=status.replace(' ET','')+ntwks
-	poss=''
-	if ourgame['status'].upper().count('FINAL') == 0 and ourgame['status'].upper().count('PM ET') == 0 and ourgame['status'].upper().count('AM ET') == 0 and showMr:
-		mrg=ourgame['most_recent_play']
-		poss=ourgame['possession']
-		if showMr: mr=': '+mrg
-		if len(mr) < 5: mr=''
-	if ourgame['team1']==poss: t1=t1+' (:)'
-	elif ourgame['team2']==poss: t2=t2+' (:)'
-	if t1c != '': t1=chr(3)+t1c+t1+chr(3)
-	if t2c != '': t2=chr(3)+t2c+t2+chr(3)
-	nident=' vs. '
-	if 'neutral' in ourgame and not ourgame['neutral']: nident=' @ '
-	bt=''
-	if btgame: bt='\x02'
-	stat_to_show=ourgame['status'].strip()
-	if supershort and (stat_to_show.count('PM ET') != 0 or stat_to_show.count('AM ET') != 0):
-		stat_to_show1=stat_to_show[:stat_to_show.find(',')].strip()
-		stat_to_show2=stat_to_show[stat_to_show.find(',')+1:].strip()
-		stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
-		stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
-		stat_to_show=stat_to_show1+' '+stat_to_show2
-	if custformat != '':	
-		return custformat.replace('%BT%',bt.strip()).replace('%T1%',t1.strip()).replace('%T2%',t2.strip()).replace('%NIDENT%',nident.strip()).replace('%MR%',mr.strip()).replace('%STATUS%',stat_to_show.strip()).replace('%NTWKS%',ntwks.strip())
-	else:
-		toretbase=t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()
-		toretbase=toretbase.strip()
-		return bt+toretbase+bt
-#			db['msgqueue'].append([t1+' '+nident+t2.strip()+mr.strip()+' '+ourgame['status']+ntwks,dest,tmtype,'score'])
+	else: ourgame=False
+	if ourgame:
+		if ourgame['status'].lower().count('pm et') != 0 or ourgame['status'].lower().count('am et') != 0: score=False
+		t1c=''
+		t2c=''
+		if color:
+			cis=artolower(db['colors'])
+			if ourgame['team1'].lower() in cis: 
+				t1c=str(cis[ourgame['team1'].lower()][0])+','+str(cis[ourgame['team1'].lower()][1])
+			if ourgame['team2'].lower() in cis: 
+				t2c=str(cis[ourgame['team2'].lower()][0])+','+str(cis[ourgame['team2'].lower()][1])
+		t1s=ourgame['team1']
+		t2s=ourgame['team2']
+		if supershort: shorts=artolower(db['supershorten'])
+		else: shorts=artolower(db['shorten'])
+		if t1s.lower() in shorts and shorts[t1s.lower()].strip() != '': t1s=shorts[t1s.lower()]
+		if t2s.lower() in shorts and shorts[t2s.lower()].strip() != '': t2s=shorts[t2s.lower()]
+		if score:
+			t1=t1s+' '+ourgame['team1score']
+			t2=t2s+' '+ourgame['team2score']
+		else:
+			t1=t1s
+			t2=t2s
+		if len(t1.split()) > 1:
+			if t1.split()[1][0]=='(': t1=t1.split()[0]
+		if len(t2.split()) > 1:
+			if t2.split()[1][0]=='(': t2=t2.split()[0]
+		rks=artolower(db['ranks'])
+		btgame=False
+	#	print ourgame['team1'].lower()
+		if ourgame['team1'].lower() in rks and rks[ourgame['team1'].lower()] != None and int(rks[ourgame['team1'].lower()]) <= 25:
+			t1='('+rks[ourgame['team1'].lower()]+') '+t1
+			#print branked
+			if branked: btgame=True
+		if ourgame['team2'].lower() in rks and rks[ourgame['team2'].lower()] != None and int(rks[ourgame['team2'].lower()]) <= 25:
+			t2='('+rks[ourgame['team2'].lower()]+') '+t2
+			if branked: btgame=True
+		#print btgame
+		ntwks=''
+		if gm in db['ntwks']:
+			if db['ntwks'][gm] != '': ntwks=' - '+db['ntwks'][gm]
+		mr=''
+		if ourgame['status'].upper().count('FINAL') == 1: ntwks=''
+		status=ourgame['status']
+		if status.lower().count('am et') != 0 or status.lower().count('pm et') != 0:
+			std=status
+			stds=std[:std.find(',')]
+			std=std[std.find(',')+2:]
+			std=std[std.find(' ')+1:]
+			std=std[std.find(' ')+1:]
+			std=stds+' '+std
+			status=std
+		status=status.replace(' ET','')+ntwks
+		poss=''
+		if ourgame['status'].upper().count('FINAL') == 0 and ourgame['status'].upper().count('PM ET') == 0 and ourgame['status'].upper().count('AM ET') == 0 and showMr:
+			mrg=ourgame['most_recent_play']
+			poss=ourgame['possession']
+			if showMr: mr=': '+mrg
+			if len(mr) < 5: mr=''
+		if ourgame['team1']==poss: t1=t1+' (:)'
+		elif ourgame['team2']==poss: t2=t2+' (:)'
+		if t1c != '': t1=chr(3)+t1c+t1+chr(3)
+		if t2c != '': t2=chr(3)+t2c+t2+chr(3)
+		nident=' vs. '
+		if 'neutral' in ourgame and not ourgame['neutral']: nident=' @ '
+		bt=''
+		if btgame: bt='\x02'
+		stat_to_show=ourgame['status'].strip()
+		if supershort and (stat_to_show.count('PM ET') != 0 or stat_to_show.count('AM ET') != 0):
+			stat_to_show1=stat_to_show[:stat_to_show.find(',')].strip()
+			stat_to_show2=stat_to_show[stat_to_show.find(',')+1:].strip()
+			stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
+			stat_to_show2=stat_to_show2[stat_to_show2.find(' '):].strip()
+			stat_to_show=stat_to_show1+' '+stat_to_show2
+		if custformat != '':	
+			return custformat.replace('%BT%',bt.strip()).replace('%T1%',t1.strip()).replace('%T2%',t2.strip()).replace('%NIDENT%',nident.strip()).replace('%MR%',mr.strip()).replace('%STATUS%',stat_to_show.strip()).replace('%NTWKS%',ntwks.strip())
+		else:
+			toretbase=t1.strip()+nident+t2.strip()+mr.strip()+' '+stat_to_show+' '+ntwks.strip()
+			if typ_of_text=='time': toretbase=(stat_to_show+' - '+toretbase.replace(stat_to_show,'')).replace('  ',' ')
+			elif typ_of_text=='channel' and ntwks.strip() != '': toretbase=(ntwks.replace('-','').strip()+' - '+toretbase.replace(ntwks.strip(),'')).replace('  ',' ')
+			toretbase=toretbase.strip()
+			return bt+toretbase+bt
+	#			db['msgqueue'].append([t1+' '+nident+t2.strip()+mr.strip()+' '+ourgame['status']+ntwks,dest,tmtype,'score'])
+	else: return 'Could not find match.'+gm
 
 def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 80 is fbs teams, typ = 81 is fcs teams)
 	scoreboard=urllib.urlopen('http://espn.go.com/college-football/scoreboard/_/group/'+typ+'/year/2015/seasontype/2/').read()

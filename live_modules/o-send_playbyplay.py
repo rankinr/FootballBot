@@ -1,5 +1,6 @@
 exec(open('/home/fbbot/cfb/common_functions.py')) #load custom functions
-l_users_in_channel=lsttolower(users_in_channel)
+l_users_in_channel=lsttolower(users_online)
+#print l_users_in_channel
 for update,users in db['play_updates'].iteritems():
 	for user in users:
 		if user.lower() in l_users_in_channel:

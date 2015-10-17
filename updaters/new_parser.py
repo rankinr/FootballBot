@@ -1,3 +1,10 @@
+"""Back to the basics with this one. Gets the current status of games,
+sends messages to the channel if there are changes to the score, and
+sends messages to users who requested updates if there are changes to
+the status.
+
+Runs every five minutes. If all the games are over, will quit after it checks once; otherwise, it will run every 8-12 seconds for about five minutes."""
+
 import urllib,time,random,re,traceback
 import os,json,sys
 from bs4 import BeautifulSoup
@@ -10,6 +17,7 @@ scores_already_sent=[]
 db={}
 db['teams']=json.loads(sql.unique_get('data','teams'))
 db['shorten']=json.loads(sql.unique_get('data','shorten'))
+db['logos']=json.loads(sql.unique_get('data','logos'))
 shorts=artolower(db['shorten'])
 db['colors']=json.loads(sql.unique_get('data','colors'))
 cis=artolower(db['colors'])
@@ -17,6 +25,15 @@ color_list=db['colors']
 lastGames=json.loads(sql.unique_get('data','games_new')) #when you loop this, you can just run this at the beginning, then thereafter use the variable from the last run
 db['games_new']=lastGames
 rks=artolower(json.loads(sql.unique_get('data','ranks')))
+
+
+#logos=artolower(db['logos'].copy())
+logos={} #switch comment on these two lines during bowl games to have the bot announce logos when a team wins
+
+colors={'white':'0','black':'1','blue':'2','green':'3','red':'4','maroon':'5','purple':'6','orange':'7','yellow':'8','light green':'9','teal':'10','cyan':'11','light blue':'12','pink':'13','grey':'14','silver':'15'}
+
+
+
 
 start_load_updates=time.time()
 
@@ -45,9 +62,9 @@ for user in a: #user[0] = username, [1] = following
 			if not game in list_of_updates:
 				list_of_updates[game]=[]
 			if not user[0] in   list_of_updates[game]: list_of_updates[game].append(user[0])
-
-print 'Total time to load users to update: '+str(time.time()-start_load_updates)
 print list_of_updates
+#print 'Total time to load users to update: '+str(time.time()-start_load_updates)
+#print list_of_updates
 
 def getGameInfo(typ): # retrieves game information from espn scoreboard (typ = 80 is fbs teams, typ = 81 is fcs teams)
 	scoreboard=urllib.urlopen('http://espn.go.com/college-football/scoreboard/_/group/'+typ+'/year/2015/seasontype/2/?t='+str(time.time())).read()
@@ -124,20 +141,20 @@ try:
 				poss=''
 				mrcur=gddt['most_recent_play']
 				comm2=mrcur.strip()
-				if gddt['team2score'] > lastGames['fbs'][gid]['team2score'] or gddt['team1score'] > lastGames['fbs'][gid]['team1score']:
+				if int(gddt['team2score']) > int(lastGames['fbs'][gid]['team2score']) or int(gddt['team1score']) > int(lastGames['fbs'][gid]['team1score']):
 					if comm2 == '':
-						if gddt['team2score'] > lastGames['fbs'][gid]['team2score']:
-							if gddt['team2score'] == lastGames['fbs'][gid]['team2score']+3: comm2=gddt['team2']+' Field Goal GOOD.'
-							elif gddt['team2score'] == lastGames['fbs'][gid]['team2score']+6: comm2=gddt['team2']+' Touchdown.'
-							elif gddt['team2score'] == lastGames['fbs'][gid]['team2score']+7: comm2=gddt['team2']+' Touchdown and Extra Point GOOD.'
-							elif gddt['team2score'] == lastGames['fbs'][gid]['team2score']+8: comm2=gddt['team2']+' Touchdown and Two Point Conversion.'
-							elif gddt['team2score'] == lastGames['fbs'][gid]['team2score']+2: comm2=gddt['team2']+' Score.'
-						if gddt['team1score'] > lastGames['fbs'][gid]['team1score']:
-							if gddt['team1score'] == lastGames['fbs'][gid]['team1score']+3: comm2=gddt['team1']+' Field Goal GOOD.'
-							elif gddt['team1score'] == lastGames['fbs'][gid]['team1score']+6: comm2=gddt['team1']+' Touchdown.'
-							elif gddt['team1score'] == lastGames['fbs'][gid]['team1score']+7: comm2=gddt['team1']+' Touchdown and Extra Point GOOD.'
-							elif gddt['team1score'] == lastGames['fbs'][gid]['team1score']+8: comm2=gddt['team1']+' Touchdown and Two Point Conversion.'
-							elif gddt['team1score'] == lastGames['fbs'][gid]['team1score']+2: comm2=gddt['team1']+' Score.'
+						if int(gddt['team2score']) > int(lastGames['fbs'][gid]['team2score']):
+							if int(gddt['team2score']) == int(lastGames['fbs'][gid]['team2score'])+3: comm2=gddt['team2']+' Field Goal GOOD.'
+							elif int(gddt['team2score']) == int(lastGames['fbs'][gid]['team2score'])+6: comm2=gddt['team2']+' Touchdown.'
+							elif int(gddt['team2score']) == int(lastGames['fbs'][gid]['team2score'])+7: comm2=gddt['team2']+' Touchdown and Extra Point GOOD.'
+							elif int(gddt['team2score']) == int(lastGames['fbs'][gid]['team2score'])+8: comm2=gddt['team2']+' Touchdown and Two Point Conversion.'
+							elif int(gddt['team2score']) == int(lastGames['fbs'][gid]['team2score'])+2: comm2=gddt['team2']+' Score.'
+						if int(gddt['team1score']) > int(lastGames['fbs'][gid]['team1score']):
+							if int(gddt['team1score']) == int(lastGames['fbs'][gid]['team1score'])+3: comm2=gddt['team1']+' Field Goal GOOD.'
+							elif int(gddt['team1score']) == int(lastGames['fbs'][gid]['team1score'])+6: comm2=gddt['team1']+' Touchdown.'
+							elif int(gddt['team1score']) == int(lastGames['fbs'][gid]['team1score'])+7: comm2=gddt['team1']+' Touchdown and Extra Point GOOD.'
+							elif int(gddt['team1score']) == int(lastGames['fbs'][gid]['team1score'])+8: comm2=gddt['team1']+' Touchdown and Two Point Conversion.'
+							elif int(gddt['team1score']) == int(lastGames['fbs'][gid]['team1score'])+2: comm2=gddt['team1']+' Score.'
 					#print comm2
 					poss=gddt['possession']
 				if poss != None:
@@ -163,9 +180,29 @@ try:
 						if gddt[datmn+'score'] == int(lastGames['fbs'][gid][datmn+'score'])+1: dacomm=datm+' EXTRA POINT GOOD!'
 						if dacomm != '': comm2=dacomm
 				stats_to_append=''
-				if st.upper().count('FINAL') == 1 or st.upper().count('HALF') == 1:
+				logo=[]
+				if (st.upper().count('FINAL') == 1 or st.upper().count('HALF') == 1) and gid in lastGames['fbs'] and lastGames['fbs'][gid]['status'].upper().count('FINAL')+lastGames['fbs'][gid]['status'].upper().count('HALF') == 0:
+					#print 'yes'
 					sts=stats(gddt['gid'])
 					stats_to_append=' -- GAME STATS: '+sts+chr(3)
+					winningteam='THISISADEFAULTVALUE'
+					if int(gddt['team1score']) > int(gddt['team2score']): winningteam=gddt['team1']
+					elif int(gddt['team2score']) > int(gddt['team1score']): winningteam=gddt['team2']
+					if  st.upper().count('FINAL') == 1 and winningteam.lower() in logos:
+						lines=logos[winningteam.lower()].split('\r\n')
+						tosend=[]
+						for line in lines:
+							while line.count('(') != 0:
+								paren=line[line.find('(')+1:line.find(')')]
+								col1=paren[:paren.find(',')].strip().lower()
+								col2=paren[paren.find(',')+1:].strip().lower()
+								if col1 in colors: col1=colors[col1]
+								else: col1=0
+								if col2 in colors: col2=colors[col2]
+								else: col2=0
+								line=line[:line.find('(')]+chr(3)+col1+','+col2+line[line.find(')')+1:]
+							tosend.append(chr(3)+'0,0.'+line)
+						logo=tosend
 				if comm2.strip() != '': comm2=' '+comm2
 				if gddt['neutral'] == True: cnctr='-'
 				else: cnctr=' @ '
@@ -179,9 +216,12 @@ try:
 				if gid in lastGames['fbs'] and gddt != lastGames['fbs'][gid]:
 					if gddt['most_recent_play'] != lastGames['fbs'][gid]['most_recent_play'] and gid in list_of_updates:
 						play_updates.append(gid)
-					if (((gddt['status'].upper().count('FINAL')==1  or gddt['status'].upper().count('OT') == 1 or gddt['status'].upper().count('15:00') != 0 or gddt['status'].upper().count('HALFTIME') != 0) and gddt['status'] != lastGames['fbs'][gid]['status']) or ((gddt['team1score'] > lastGames['fbs'][gid]['team1score']	or gddt['team2score'] > lastGames['fbs'][gid]['team2score']) and not score_code in scores_already_sent)):				
+					if (((gddt['status'].upper().count('FINAL')==1  or gddt['status'].upper().count('OT') == 1 or gddt['status'].upper().count('15:00') != 0 or gddt['status'].upper().count('HALFTIME') != 0) and gddt['status'] != lastGames['fbs'][gid]['status']) or ((int(gddt['team1score']) > int(lastGames['fbs'][gid]['team1score'])	or int(gddt['team2score']) > int(lastGames['fbs'][gid]['team2score'])) and not score_code in scores_already_sent)):				
 						if not msg in msgs_already_sent:
 							db['msgqueue']=json.loads(sql.unique_get('data','msgqueue'))
+							if len(logo) > 0:
+								for logo_line in logo:
+									db['msgqueue'].append([logo_line,None,None,'score'])
 							db['msgqueue'].append([msg,None,None,'score']) #when make it final, update to [msg,None,None,'score']
 							sql.unique_set('data','msgqueue',json.dumps(db['msgqueue']))
 							msgs_already_sent.append(msg)
@@ -189,8 +229,10 @@ try:
 			for gid,gddt in games['fcs'].iteritems():
 				if gid in lastGames['fcs'] and gddt != lastGames['fcs'][gid] and gddt['most_recent_play'] != lastGames['fcs'][gid]['most_recent_play'] and gid in list_of_updates:
 					play_updates.append(gid)
-		if json.dumps(games).count('team1score') == json.dumps(games).count('PM EDT')+json.dumps(games).count('AM EDT') or json.dumps(games).count('team1score') == json.dumps(games).count('DELAYED')+json.dumps(games).count('PM EDT')+json.dumps(games).count('AM EDT')+json.dumps(games).count('FINAL'):
+		j_string=json.dumps(games).upper()
+		if j_string.count('TEAM1SCORE') == j_string.count('PM EDT')+j_string.count('AM EDT') or j_string.count('TEAM1SCORE') == j_string.count('DELAYED')+j_string.count('PM EDT')+j_string.count('AM EDT')+j_string.count('FINAL'):
 			start_time=0
+
 		if time.time() > start_time+60*4.8:
 			keepGoing=False
 		lastGames=games
@@ -198,7 +240,7 @@ try:
 			play_updates_f={}
 			for game in play_updates:
 				play_updates_f[game]=list_of_updates[game]
-			print play_updates_f
+			#print play_updates_f
 			sql.unique_set('data','play_updates',json.dumps(play_updates_f))
 		time.sleep(random.randrange(8,13))
 except:

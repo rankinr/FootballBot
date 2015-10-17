@@ -1,3 +1,5 @@
+"""This runs every morning to get the list of networks that games will be on."""
+
 from mechanize import Browser
 from bs4 import BeautifulSoup
 import json
@@ -28,9 +30,9 @@ for table in tables:
 				team1=str(cols[0])
 				team2=str(cols[1])
 				team1=team1[team1.find('<span>')+len('<span>'):]
-				team1=team1[:team1.find('</span>')]
+				team1=team1[:team1.find('</span>')].replace('&amp;','&')
 				team2=team2[team2.find('<span>')+len('<span>'):]
-				team2=team2[:team2.find('</span>')]
+				team2=team2[:team2.find('</span>')].replace('&amp;','&')
 				ntwks=[]
 				#print tv
 				if tv.count('espn-abc') != 0: ntwks.append('ABC')
@@ -48,7 +50,6 @@ for table in tables:
 				if tv.count('BTN') != 0: ntwks.append('BTN')
 				if tv.count('CBSSN') != 0: ntwks.append('CBSSN')
 				if tv.count('FOXS1') != 0: ntwks.append('FOXS1')
-				
 				tvo=tvo.findAll(text=True)
 				for a in tvo:
 					if str(a).strip() != '' and str(a).strip() != 'LIVE': ntwks.append(str(a))
@@ -57,9 +58,10 @@ for table in tables:
 					if ntwks[-1]==',': ntwks=ntwks[:-1]
 				ntwks=ntwks.strip()
 				daname=''
+				if team1.count('bama') != 0: print team1+team2
 				if team1+team2 in db['games']: daname=team1+team2
 				elif team2+team1 in db['games']: daname=team2+team1
 				if daname != '':
 					db['ntwks'][daname]=ntwks
-				print daname+ntwks
+				if daname.count('bama') != 0: print daname+ntwks
 sql.unique_set('data','ntwks',json.dumps(db['ntwks']))

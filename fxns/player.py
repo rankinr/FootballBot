@@ -52,7 +52,7 @@ if len(closest_vals) > 1:
 			db['msgqueue'].append([msg,msg_dest])
 	else: db['msgqueue'].append([message,msg_dest])
 else:
-	if closest_match_url != '' and closest_val <= 10:
+	if closest_match_url != '' and closest_val <= 5:
 		player=BeautifulSoup(urllib.urlopen(closest_match_url),"html5lib")
 		player=player.find('table',{'class':'tablehead'})
 		headings=player.findAll('tr',{'class':'colhead'})

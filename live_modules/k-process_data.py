@@ -1,9 +1,12 @@
+tlana=''
 for line in lines:
+	isText=False
 	tlana=' '.join(line)
 	#print line
 	#CHECK FOR NICKSERV PING REPLY###
-	
+
 	#:nickserv!nickserv@services. notice footballbot :harkatmuld acc 1
+	
 	if ((tlana.lower().count('footballbot') != 0 or tlana.count('harkat') != 0 or tlana.count(' bot ') != 0)) and tlana.count('freenode.net') == 0 and tlana.count('PING') == 0:
 		user=line[0][1:line[0].find('!')]
 		if user.lower() != 'footballbot' and user.lower() != 'harkatmuld': db['msgqueue'].append([tlana,'harkatmuld',None,None,False])
@@ -51,6 +54,7 @@ for line in lines:
 		user=line[0][1:line[0].find('!')]
 		origin=user
 		dest=line[2]
+		######NORMAL STUFF
 		if not origin in user_messages: user_messages[origin]=[]
 		if dest=='#redditcfb': user_messages[origin].append(time.time())			
 		if not user in users_in_channel and dest=='#redditcfb': users_in_channel.append(user)
@@ -71,7 +75,7 @@ for line in lines:
 				if dest == 'footballbot': dest=user
 				#print comment.author
 				db['msgqueue'].append([str(comment.author)+': '+comment.body[:400]+chr(3),dest,None,None,False])
-		if ' '.join(line).count('twitter.com/') == 1 and (' '.join(line).count('/status/') == 1 or ' '.join(line).count('/statuses/') == 1) and (line[2]!='#redditcfb'):
+		if ' '.join(line).count('twitter.com/') == 1 and (' '.join(line).count('/status/') == 1 or ' '.join(line).count('/statuses/') == 1) and (line[2]!='#redditcfb' and line[2] != '#cfbot'):
 			for a in line:
 				if a.count('twitter.com') == 1:
 					ts=''
@@ -114,6 +118,39 @@ for line in lines:
 		##############
 		ful=' '.join(line)
 		if len(line[3]) > 2:
+			##### INTERPRET PLAIN LANGUAGE MESSAGES
+		
+			cur_l=' '.join(line[3:])
+			msg_type_p='PRIVMSG'
+			if dest.lower() != 'footballbot': msg_dest_p=dest
+			else: msg_dest_p=origin
+			if keywords(cur_l, ['bot ',' rank']) and not keywords(tlana,['github']) and not keywords(tlana,['solbot']):
+				db['msgqueue'].append([origin+': I get my rankings from the /r/cfb poll, available at http://rcfbpoll.com/. Rankings beyond 25 are based on the number of votes each team receives.',msg_dest,msg_type])
+			elif keywords(cur_l,['what','is','score']) or keywords(cur_l,['what','are','score']) or keywords(cur_l,["what'",'score']) or keywords(cur_l,["when'",'game']) or keywords(cur_l,['when','is','game']) or keywords(cur_l,['when','are','game']) or keywords(cur_l,["when'",'playing']) or keywords(cur_l,['when','is','playing']) or keywords(cur_l,['when','are','playing']) or keywords(cur_l,['what','channel']) or keywords(cur_l,['what','network']) or keywords(cur_l,['what','time','game']) or keywords(cur_l,['what','time','playing']):
+				cur_l_orig=cur_l
+				cur_l=re.split('and|,',cur_l)
+				games=[]
+				print cur_l
+				for game in cur_l:
+					gm_text=remove_text(game,['when','playing','channel',' on','whats',"what's",'what','scores','games','score','game',' and ',' for ',' the ',' is ',' are ','.','?','!',':',"'s",'time','>','gonna','start',' hell','network']).strip()
+					if gm_text != '' and gm_text.count(' ') <= 3: games.append(gm_text)
+				for game in games:
+					games_nextloop.append(game)
+					if not 'score'+'_ucmd' in cached: cached['score_ucmd']=open('/home/fbbot/cfb/fxns/score.py').read()
+					params=[game]
+					db['msgqueue'].append(['did it','harkatmuld'])
+					isText=True
+					type_of_text=''
+					if keywords(cur_l_orig,["when'",'game']) or keywords(cur_l_orig,['when','is','game']) or keywords(cur_l_orig,['when','are','game']) or keywords(cur_l_orig,["when'",'playing']) or keywords(cur_l_orig,['when','is','playing']) or keywords(cur_l_orig,['when','are','playing']) or keywords(cur_l_orig,['what','time','game']) or keywords(cur_l_orig,['what','time','playing']):
+						type_of_text='time'
+					elif keywords(cur_l_orig,['what','channel']) or keywords(cur_l_orig,['what','network']):
+						type_of_text='channel'
+					exec cached['score_ucmd']		
+			
+			
+			
+			#### INTERPRET COMMANDS
+			
 			if line[3][1] == '$' and line[3][2].isalpha(): line[3]=':!$'+line[3][2:]
 			elif line[3][1] == '?' and line[3][2].isalpha():
 				line=line[:3]+[':!info']+line[3:]
@@ -124,6 +161,9 @@ for line in lines:
 			allowit=True
 			if user in pastcmd:
 				if len(pastcmd[user]) > 4 and user.lower().count('dublock') == 0 and user.lower().count('harkat') == 0: allowit=False
+			if ' '.join(line[3:]).count('!') == len(' '.join(line[3:]))-1: allowit=False
+			print  ' '.join(line[3:]).count('!')
+			print len(' '.join(line[3:]))
 			if line[3][1]=='!' and allowit:
 				#print line
 				#if user.lower().count('ptyyy') != 0: dlevel=1000000

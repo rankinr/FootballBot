@@ -15,11 +15,12 @@ announced=[] #to track games whose start has been announced
 tmtype='PRIVMSG' # default message type is PRIVMSG
 pastcmd={} #tracks past commands that users have issued to prevent abuse
 mostrecentnicks=[] #tracks most recent users sending commands
-
+sentMass=True
 users_online=[]
 last_users_update=0
 mods_list=[]
 new_users_online=[]
+games_nextloop=[]
 
 rcfb_msgs=[]
 user_messages={}

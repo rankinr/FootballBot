@@ -42,11 +42,11 @@ while len(db['msgqueue']) != 0:
 		#print '4'
 		for chan in sendto:
 			#print '5'
-			if chan == '#redditcfb' and len(rcfb_msgs) > 3:
+			if chan == '#redditcfb' and len(rcfb_msgs) > 30:
 				for msg_time in rcfb_msgs:
 					if time.time()-msg_time > 9:
 						rcfb_msgs.pop(rcfb_msgs.index(msg_time))
-			if chan != '#redditcfb' or len(rcfb_msgs) < 4 or 1==1:
+			if chan != '#redditcfb' or len(rcfb_msgs) < 40 or 1==1:
 				if chan == '#redditcfb': rcfb_msgs.append(time.time())
 				colordi=''
 				if cursing and chan.lower() != 'nickserv' and midentifier != 'comment' and midentifier != 'comments':

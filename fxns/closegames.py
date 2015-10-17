@@ -18,7 +18,7 @@ if user_pref:
 for b,a in db['games_new']['fbs'].iteritems():
 	if b != 'lastupdate':
 		st=str(a['status']).lower()
-		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am et') == 0 and st.count('pm et') == 0:
+		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am edt') == 0 and st.count('pm edt') == 0:
 			ourgame=a
 			t1rk=''
 			t2rk=''
@@ -36,7 +36,7 @@ for b,a in db['games_new']['fbs'].iteritems():
 				if closests in db['ntwks'] and db['ntwks'][closests].strip() != '': ntwks=' - '+db['ntwks'][closests].strip()
 				if lst != '': lst+=' '+chr(3)+'1,1 . '+chr(3)+' '
 				(t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()))
-				if (   ((t1rk == '' and t2rk != '') or (t1rk != '' and t2rk != '' and int(t1rk.replace('(','').replace(')','').strip()) > int(t2rk.replace('(','').replace(')','').strip()))) and int(ourgame['team1score']) >= int(ourgame['team2score'])) or (((      ((t2rk == '' and t1rk != '') or ((t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip())))) and int(ourgame['team2score']) >= int(ourgame['team1score'])))):
+				if (   ((t1rk == '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) < 50) or (t1rk != '' and t2rk != '' and int(t1rk.replace('(','').replace(')','').strip()) > int(t2rk.replace('(','').replace(')','').strip()) and (int(t2rk.replace('(','').replace(')','').strip()) < 25 or int(t1rk.replace('(','').replace(')','').strip())-int(t2rk.replace('(','').replace(')','').strip()) > 15)      )) and int(ourgame['team1score']) >= int(ourgame['team2score'])) or (((      ((t2rk == '' and t1rk != '' and int(t1rk.replace('(','').replace(')','').strip()) < 50) or ((t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()) and (  (int(t1rk.replace('(','').replace(')','').strip()) < 25) or (int(t2rk.replace('(','').replace(')','').strip())-int(t1rk.replace('(','').replace(')','').strip()) > 15)  ) ))) and int(ourgame['team2score']) >= int(ourgame['team1score'])))):
 					lst+=chr(3)+'0,4UPSET ALERT: '
 					lste=chr(3)
 				lst+=t1+'-'+t2+' ('+ourgame['status']+ntwks+')'+lste

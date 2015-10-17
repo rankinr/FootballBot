@@ -1,3 +1,4 @@
+"""Gets the list of players for the !player command. The list of players is quite hefty, so this does not run automatically."""
 import urllib,urlparse,time,random,re,traceback
 import os,json
 from bs4 import BeautifulSoup

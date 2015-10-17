@@ -1,3 +1,5 @@
+"""Pulls rankings from /r/cfb poll once a day."""
+
 import re,urllib,os,fcntl,json
 import MySQLdb
 
