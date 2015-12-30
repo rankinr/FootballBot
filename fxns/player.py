@@ -29,12 +29,12 @@ closest_vals=[]
 closest_match_urls=[]
 for player in players:
 	# the next few lines are just creating various iterations on the player's name ("B. Kaaya","Brad Kaaya","Kaaya","Brad Kaaya (Miami)") to compare to the string the user sent
-	if tstring.count(' ')==0: p_name=player[0][::-1][:player[0][::-1].find(' ')][::-1].strip()
-	else: p_name=player[0]
+	p_name5=player[0][::-1][:player[0][::-1].find(' ')][::-1].strip()
+	p_name4=player[0]
 	pname1=player[0][0]+' '+player[0][player[0].find(' ')+1:]
-	pname2=p_name+' '+player[2]
-	pname3=p_name+' '+player[2]
-	diff=min([lev(p_name.lower(),tstring.lower()),lev(pname1.lower(),tstring.lower()),lev(pname2,tstring.lower()),lev(pname3, tstring.lower())])
+	pname2=p_name4+' '+player[2]
+	pname3=p_name4+' '+player[2]
+	diff=min([lev(p_name4.lower(),tstring.lower()), lev(p_name5.lower(),tstring.lower()),lev(pname1.lower(),tstring.lower()),lev(pname2,tstring.lower()),lev(pname3, tstring.lower())])
 	if diff < closest_val:
 		closest_match_name=player[0]
 		closest_match_url=player[1]
@@ -47,10 +47,10 @@ for player in players:
 		closest_vals.append(player[0]+' ('+player[2]+')')
 if len(closest_vals) > 1:
 	message='Please be more specific, there are multiple matches: '+', '.join(closest_vals)
-	if len(message) > 400:
-		for msg in splitMessage(message):
-			db['msgqueue'].append([msg,msg_dest])
-	else: db['msgqueue'].append([message,msg_dest])
+	if len(message) > 400: message='Please be more specific, there are multiple matches.'
+		#for msg in splitMessage(message):
+			#db['msgqueue'].append([msg,msg_dest])
+	db['msgqueue'].append([message,msg_dest])
 else:
 	if closest_match_url != '' and closest_val <= 5:
 		player=BeautifulSoup(urllib.urlopen(closest_match_url),"html5lib")

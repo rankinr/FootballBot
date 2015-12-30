@@ -7,10 +7,17 @@ import oauth2 as oauth
 import json, operator, math
 import httplib
 from xml.etree import ElementTree as etree
-
+prefix=str(sys.argv)
+if len(sys.argv) == 1: 
+	prefix=''
+	prefix_un=''
+else: 
+	prefix=str(sys.argv[1])+'_'
+	prefix_un='_'+str(sys.argv[1])
 exec(open('/home/fbbot/cfb/sload.py').read()) # load mysql information
 exec(open('/home/fbbot/cfb/common_functions.py')) #load custom functions
-
+os.system('ls -lah /home/fbbot/cfb/live_modules/ > .live_modules_dir')
+live_modules=open('/home/fbbot/cfb/.live_modules_dir').read().split('\n')
 announced=[] #to track games whose start has been announced
 tmtype='PRIVMSG' # default message type is PRIVMSG
 pastcmd={} #tracks past commands that users have issued to prevent abuse
@@ -21,6 +28,7 @@ last_users_update=0
 mods_list=[]
 new_users_online=[]
 games_nextloop=[]
+last_msgs={}
 
 rcfb_msgs=[]
 user_messages={}
@@ -35,7 +43,10 @@ lasterr=''
 lastmsg=''
 users_in_channel=[]
 lasterrl=''
-
+isAutoDetect=False
+lastAutoDetect=''
+lastAutoDetectTime=time.time()
+irc_flairs_new=json.loads(urllib.urlopen('http://162.243.6.111:7778/kiwi/assets/libs/final.json').read())
 last_alert=time.time()
 
 def lev(a,b):
@@ -55,16 +66,16 @@ def lev(a,b):
                 change = change + 1
             current[j] = min(add, delete, change)
     return current[n]
-def closest(one,two):
-	lowest=1000
-	for o in one:
-		for t in two:
-			thisdist=lev(o,t)
-			if thisdist < lowest and (thisdist <=1 or (thisdist <=3 and len(t) > 5) or (thisdist <=5 and len(t) > 7)):
-				lowest=thisdist
-	return lowest
 db['config']=json.loads(sql.unique_get('data','config'))
+db['conferences']=json.loads(sql.unique_get('data','conferences'))
+db['abbreviations']=json.loads(sql.unique_get('data','abbreviations'))
 db['config']['connect']['server']='127.0.0.1'
+conf_lower=[]
+for a,b in db['conferences'].iteritems():
+	conf_lower.append(a.lower().replace(' ',''))
+abbrev_lower={}
+for b,a in db['abbreviations'].iteritems():
+	abbrev_lower[a[0].lower().replace(' ','')]=a[1]
 print 'entering loop'
 while keepRunning:
 	lines=[]
@@ -80,7 +91,7 @@ while keepRunning:
 		print 'sent info'
 		time.sleep(3)
 		if not 'quit' in db['config']: db['config']['quit']=False
-		s.send("PASS \r\n")
+		s.send("PASS FootballBot"+prefix_un+":\r\n")
 		s.setblocking(0)
 		lastsent=time.time()
 	try:
@@ -102,7 +113,13 @@ while keepRunning:
 			open('logs/error.log','a').write(str(errr)+'\r\n')
 			errd=str(errr)
 			errd=errd[errd.find(':')+1:].replace('\n',' ').replace('\r','').strip()
-			s.send('PRIVMSG #cfbtest : harkatmuld, there is an error: '+errd)
+			#s.send('PRIVMSG #cfbtest : harkatmuld, there is an error: '+errd)
+		errors=json.loads(sql.unique_get('data','errors'))
+		if errr in errors: errors[errr][0]+=1
+		else: errors[errr]=[1,0]
+		errors[errr][1]=time.time()
+		print json.dumps(errors)
+		sql.unique_set('data','errors',json.dumps(errors))
 		lasterr=str(errr)
 		if errr.lower().count('socket.error') != 0 or errr.lower().count('broken pip') != 0:
 			s.close()

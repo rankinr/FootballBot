@@ -1,18 +1,20 @@
+
 tlana=''
+just_authed=[]
+#print commands_pending_auth
 for line in lines:
 	isText=False
 	tlana=' '.join(line)
 	#print line
 	#CHECK FOR NICKSERV PING REPLY###
-
 	#:nickserv!nickserv@services. notice footballbot :harkatmuld acc 1
 	
-	if ((tlana.lower().count('footballbot') != 0 or tlana.count('harkat') != 0 or tlana.count(' bot ') != 0)) and tlana.count('freenode.net') == 0 and tlana.count('PING') == 0:
+	if ((tlana.lower().count('footballbot') != 0 or tlana.count('harkat') != 0 or tlana.count(' bot ') != 0)) and tlana.count('freenode.net') == 0 and tlana.count('PING') == 0 and prefix=='':
 		user=line[0][1:line[0].find('!')]
 		if user.lower() != 'footballbot' and user.lower() != 'harkatmuld': db['msgqueue'].append([tlana,'harkatmuld',None,None,False])
 	if line[1] == '353':
 		if time.time()-last_users_update > 30: 
-			print time.time()-last_users_update
+			#print time.time()-last_users_update
 			new_users_online=[]
 			mods_list=[]
 		users_raw=tlana[1:]
@@ -32,8 +34,26 @@ for line in lines:
 		#open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': PING PONG\r\n')
 	elif line[1].lower() == 'join':
 		user=line[0][1:line[0].find('!')]
+		client=line[0][line[0].find('!'):]
+		client=client[:client.find(' ')].lower()
 		channel_join=line[-1].strip()
 		if channel_join=='#redditcfb': users_in_channel.append(user)
+		user_pref=sql.get_user(user)
+		if user_pref and 'most_recent_msgs' in user_pref and user_pref['most_recent_msgs']=='Yes':
+			print user_pref
+			last_msgs_to_send=[]
+			if channel_join.replace('#','').lower() in last_msgs:
+				for msg in last_msgs[channel_join.replace('#','').lower()]:
+					if time.time()-msg[1] < 60*15:
+						last_msgs_to_send.append(msg)
+			if len(last_msgs_to_send) != 0:
+				db['msgqueue'].append(['Most recent messages sent to '+channel_join+':',user])
+				for msg in last_msgs_to_send:
+					time_ago=time.time()-msg[1]
+					if time_ago > 60: time_ago=str(int(time_ago/60))+'m ago'
+					else: time_ago=str(int(time_ago))+'s ago'
+					msg_type='PRIVMSG'
+					db['msgqueue'].append(['\x02'+time_ago+'\x02 '+msg[0],user,msg_type,None,False])
 	elif line[1].lower() == 'part' or line[1].lower() == 'quit':
 		user=line[0][1:line[0].find('!')]
 		channel_part=line[-2].strip()
@@ -49,18 +69,35 @@ for line in lines:
 			list_of_users.append(usern[0])
 		if user in list_of_users:
 			sql.cur.execute("""update me set username='"""+MySQLdb.escape_string(newnick)+"""' where username='"""+MySQLdb.escape_string(user)+"""' limit 1;""")
-			print """update me set username='"""+MySQLdb.escape_string(newnick)+"""' where username='"""+MySQLdb.escape_string(user)+"""' limit 1;"""
-	elif len(line) >3:
+			#print """update me set username='"""+MySQLdb.escape_string(newnick)+"""' where username='"""+MySQLdb.escape_string(user)+"""' limit 1;"""
+	elif len(line) >3: #[':NickServ!NickServ@services.', 'NOTICE', 'FootballBot', ':harkatmuld', 'ACC', '3']
+		if line[0]==':NickServ!NickServ@services.' and line[1] == 'NOTICE' and line[4]=='ACC':
+			if line[5] == '3':
+				just_authed.append(line[3][1:])
+				if line[3][1:] in commands_pending_auth:
+					for line_pending in commands_pending_auth[line[3][1:]]:
+						lines.append(line_pending)
+			elif line[5] == '0': #not registered
+				db['msgqueue'].append(['To use this command, you must register your nickname with freenode and log in. To register, type "/ns REGISTER <password> <email-address>".',line[3][1:]])
+			elif line[5] == '1' or line[5] == '2': #not authed			
+				db['msgqueue'].append(['To use this command, you must authenticate to freenode. To log in, type "/ns identify <password>".',line[3][1:]])
+			commands_pending_auth.pop(line[3][1:])
 		user=line[0][1:line[0].find('!')]
 		origin=user
 		dest=line[2]
+		if dest.count('#') != 0 and line[1]=='PRIVMSG':
+			if not dest.replace('#','').lower() in last_msgs: last_msgs[dest.replace('#','').lower()]=[]
+			last_msgs[dest.replace('#','').lower()].append(['<'+origin+'> '+' '.join(line[3:])[1:],time.time()])
+			for chan in last_msgs:
+				if len(last_msgs[chan]) > 5:
+					last_msgs[chan].pop(0)
 		######NORMAL STUFF
 		if not origin in user_messages: user_messages[origin]=[]
 		if dest=='#redditcfb': user_messages[origin].append(time.time())			
 		if not user in users_in_channel and dest=='#redditcfb': users_in_channel.append(user)
 
-		open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': '+user+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
-		open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': '+user+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
+		open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M:%S')+': '+user+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
+		#open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': '+user+' to '+line[2]+': '+' '.join(line[3:])[1:]+'\r\n')
 		######################-TWITTER STATUS DISPLAY-####################
 		turl=''
 		if ' '.join(line).lower().count('reddit.com/') == 1 and ' '.join(line).lower().count('/comments/') != 0:
@@ -124,17 +161,20 @@ for line in lines:
 			msg_type_p='PRIVMSG'
 			if dest.lower() != 'footballbot': msg_dest_p=dest
 			else: msg_dest_p=origin
-			if keywords(cur_l, ['bot ',' rank']) and not keywords(tlana,['github']) and not keywords(tlana,['solbot']):
-				db['msgqueue'].append([origin+': I get my rankings from the /r/cfb poll, available at http://rcfbpoll.com/. Rankings beyond 25 are based on the number of votes each team receives.',msg_dest,msg_type])
-			elif keywords(cur_l,['what','is','score']) or keywords(cur_l,['what','are','score']) or keywords(cur_l,["what'",'score']) or keywords(cur_l,["when'",'game']) or keywords(cur_l,['when','is','game']) or keywords(cur_l,['when','are','game']) or keywords(cur_l,["when'",'playing']) or keywords(cur_l,['when','is','playing']) or keywords(cur_l,['when','are','playing']) or keywords(cur_l,['what','channel']) or keywords(cur_l,['what','network']) or keywords(cur_l,['what','time','game']) or keywords(cur_l,['what','time','playing']):
+			if (keywords(cur_l, ['bot ',' rank']) or keywords(cur_l, ['bot ',' poll'])) and not keywords(tlana,['github']) and not keywords(tlana,['solbot']):
+				db['msgqueue'].append([origin+': I get my rankings from the /r/cfb poll, available at http://rcfbpoll.com/. Rankings beyond 25 are based on the number of votes each team receives.',msg_dest_p,'PRIVMSG'])
+			elif keywords(cur_l,['what','is','score']) or keywords(cur_l,['what','was','score']) or keywords(cur_l,['what','are','score']) or keywords(cur_l,["what'",'score']) or keywords(cur_l,["whats",'score']) or keywords(cur_l,["when'",'game']) or keywords(cur_l,['when','is','game']) or keywords(cur_l,['when','are','game']) or keywords(cur_l,["when'",'playing']) or keywords(cur_l,['when','is','playing']) or keywords(cur_l,['when','are','playing']) or keywords(cur_l,['what','channel']) or keywords(cur_l,['what','network']) or keywords(cur_l,['what','time']) or keywords(cur_l,['what','time','playing']):
 				cur_l_orig=cur_l
-				cur_l=re.split('and|,',cur_l)
+				cur_l=re.split('and|,|/',cur_l)
 				games=[]
-				print cur_l
+				#print cur_l
 				for game in cur_l:
-					gm_text=remove_text(game,['when','playing','channel',' on','whats',"what's",'what','scores','games','score','game',' and ',' for ',' the ',' is ',' are ','.','?','!',':',"'s",'time','>','gonna','start',' hell','network']).strip()
-					if gm_text != '' and gm_text.count(' ') <= 3: games.append(gm_text)
+					gm_text=remove_text(game,['when','playing','channel',' on','whats',"what's",'what','scores','games','score','game',' was ', ' and ',' for ',' the ',' is ',' are ','.','?','!',':',"'s",'time','>','gonna','start',' hell','network','its','it','at','kick','off','play','also','does']).strip()
+					if gm_text != '' and gm_text.count(' ') <= 3 and cur_l_orig.count(' ') < 10: games.append(gm_text)
+				print games
 				for game in games:
+					if game.count(' vs') != 0: game=game[:game.find(' vs')]
+					if game.count(' ') != 0 and game.count(' st') == 0: game=game[:game.find(' ')] #a lot of people, when asking what a score is or a channel is, seem to use both teams. so hopefully this will help without message up too much.
 					games_nextloop.append(game)
 					if not 'score'+'_ucmd' in cached: cached['score_ucmd']=open('/home/fbbot/cfb/fxns/score.py').read()
 					params=[game]
@@ -145,8 +185,9 @@ for line in lines:
 						type_of_text='time'
 					elif keywords(cur_l_orig,['what','channel']) or keywords(cur_l_orig,['what','network']):
 						type_of_text='channel'
+					isAutoDetect=True
 					exec cached['score_ucmd']		
-			
+				isAutoDetect=False
 			
 			
 			#### INTERPRET COMMANDS
@@ -160,10 +201,10 @@ for line in lines:
 				if len(line) >= 4: line[4]=line[4][2:]
 			allowit=True
 			if user in pastcmd:
-				if len(pastcmd[user]) > 4 and user.lower().count('dublock') == 0 and user.lower().count('harkat') == 0: allowit=False
+				if len(pastcmd[user]) > 15 and user.lower().count('dublock') == 0 and user.lower().count('harkat') == 0: allowit=False
 			if ' '.join(line[3:]).count('!') == len(' '.join(line[3:]))-1: allowit=False
-			print  ' '.join(line[3:]).count('!')
-			print len(' '.join(line[3:]))
+			#print  ' '.join(line[3:]).count('!')
+			#print len(' '.join(line[3:]))
 			if line[3][1]=='!' and allowit:
 				#print line
 				#if user.lower().count('ptyyy') != 0: dlevel=1000000
@@ -188,7 +229,7 @@ for line in lines:
 					elif line[3][0] == '?': line=line[:3]+[':!info']+line[3:]
 					else: line=line[:3]+[':!score']+line[3:]
 					#print line
-				if (' '.join(line[3:]).count('.') ==0 or ' '.join(line[3:]).count('!player ') != 0) and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
+				if (' '.join(line[3:]).count('.') ==0 or ' '.join(line[3:]).count('!player ') != 0 or ' '.join(line[3:]).count('!bet ') != 0) and ((cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py\n') != 0) or (cached['fxnsdir'].count(' '+line[3][2:].lower()+'.py ') != 0)):
 					user=line[0][1:line[0].find('!')]
 					dest=line[2].lower()
 					params=line[4:]

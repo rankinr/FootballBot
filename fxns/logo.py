@@ -13,7 +13,7 @@ if team in logos:
 			col1=colors[paren[:paren.find(',')].strip().lower()]
 			col2=colors[paren[paren.find(',')+1:].strip().lower()]
 			line=line[:line.find('(')]+chr(3)+col1+','+col2+line[line.find(')')+1:]
-		tosend+='PRIVMSG #cfbtest :'+line+'\r\n'
+		tosend+='PRIVMSG harkatmuld :'+line+'\r\n'
 		print line
 	s.send(tosend)
 #(black, black).....(white, white).....(black, black)......

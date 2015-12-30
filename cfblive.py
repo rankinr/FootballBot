@@ -1,12 +1,11 @@
-time.sleep(1)
+time.sleep(.8)
 showStatus=False #show bot status?
 overall_start_time=time.time()
 #load live modules (this is quite intensive to load all these files every second - in the future, should cache and only reload on command)
-os.system('ls -lah /home/fbbot/cfb/live_modules/ > .live_modules_dir')
-live_modules=open('.live_modules_dir').read().split('\n')
-os.system('rm .live_modules_dir')
+#os.system('ls -lah /home/fbbot/cfb/live_modules/ > .live_modules_dir')
+#live_modules=open('/home/fbbot/cfb/.live_modules_dir').read().split('\n')
+#os.system('rm /home/fbbot/cfb/.live_modules_dir')
 modules=[]
-
 for module in live_modules:
 	if module.count('.py') != 0:
 		module=module[::-1][module[::-1].find('.py'[::-1])+3:]
@@ -23,10 +22,11 @@ for module in modules:
 		loading_times[module]=end_time-start_time
 	except:
 		errrl=traceback.format_exc()
-		if str(errrl) != lasterrl: 
-			errd=str(errrl)
-			errd=errd[errd.find(':')+1:].strip().replace('\r',' ').replace('\n',' ')
-			s.send('PRIVMSG #cfbtest :harkatmuld, there is an error in module '+module+': '+errd+'\r\n')
+		errors=json.loads(sql.unique_get('data','errors'))
+		if errrl in errors: errors[errrl][0]+=1
+		else: errors[errrl]=[1,0]
+		errors[errrl][1]=time.time()
+		sql.unique_set('data','errors',json.dumps(errors))
 		lasterrl=str(errrl)
 loading_times=sorted(loading_times.items(), key=operator.itemgetter(1))
 loading_times.reverse()
@@ -62,4 +62,11 @@ if showStatus:
 	print users_in_channel
 #loop_time=time.time()-this_loop_start_time
 
-if overall_end_time-overall_start_time > 1: s.send('PRIVMSG #cfbtest :harkatmuld, I had a long loop time. In total, the commands took '+str(overall_end_time-overall_start_time)+' seconds to execute.\r\n')
+#if overall_end_time-overall_start_time > 1: s.send('PRIVMSG #cfbtest :harkatmuld, I had a long loop time. In total, the commands took '+str(overall_end_time-overall_start_time)+' seconds to execute.\r\n')
+if time.localtime()[4] == 18:
+	conf_lower=[]
+	for a,b in db['conferences'].iteritems():
+		conf_lower.append(a.lower().replace(' ',''))
+	abbrev_lower={}
+	for b,a in db['abbreviations'].iteritems():
+		abbrev_lower[a[0].lower().replace(' ','')]=a[1]

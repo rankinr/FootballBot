@@ -64,7 +64,12 @@ for row in rows:
 				second+=c2[c2.find('>')+1:].strip()
 #				print first
 #				print second
-				db['spread'][gident]=first+', '+second+', '+ou
+				sp=first+', '+second+', '+ou
+				if sp.count('tbody') != 0:
+					ou=sp[:sp.find('O/U')].strip()[::-1]
+					ou=ou[:ou.find(' ')].strip()[::-1]
+					sp='EVEN '+ou+' O/U'
+				db['spread'][gident]=sp
 				db['games_new']['fbs'][gident]['neutral']=neutral
 	except:
 		aewe=1

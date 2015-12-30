@@ -1,10 +1,18 @@
+
 while len(db['msgqueue']) != 0:
+	print db['msgqueue']
+	doDrunk=True
 	sql.unique_set('data','drunklevel',str(int(db['drunklevel'])+1))
 	#[msg,channel (all main db['config']['chans']), type(privmsg),identifier(None)]
 	#print db['msgqueue']
 	#print db['msgqueue'][0][0]
-	db['msgqueue'][0][0]=db['msgqueue'][0][0].replace(u'\xe9','e').replace(u'\xb7','').decode('utf8').replace('\r','').replace('\n','')
-	if len(db['msgqueue'][0]) >=5: cursing=db['msgqueue'][0][4]
+	db['msgqueue'][0][0]=unicode(db['msgqueue'][0][0]).encode('ascii',errors='ignore').replace('\r','').replace('\n','')
+	if len(db['msgqueue'][0]) >=5: 
+		cursing=db['msgqueue'][0][4]
+		if cursing == 'Yes' or cursing == False: 
+			cursing=False
+			doDrunk=False
+		else: cursing=True
 	else: cursing=True
 	if len(db['msgqueue'][0])  >= 4: 
 		midentifier=db['msgqueue'][0][3]
@@ -49,7 +57,7 @@ while len(db['msgqueue']) != 0:
 			if chan != '#redditcfb' or len(rcfb_msgs) < 40 or 1==1:
 				if chan == '#redditcfb': rcfb_msgs.append(time.time())
 				colordi=''
-				if cursing and chan.lower() != 'nickserv' and midentifier != 'comment' and midentifier != 'comments':
+				if cursing and chan.lower() != 'nickserv' and midentifier != 'comment' and midentifier != 'comments' and doDrunk != False:
 					if msg.count('My current circuit alcohol level is') == 1: dlevel=dlevel*2
 					"""
 					#drunksettings ->
@@ -64,7 +72,7 @@ while len(db['msgqueue']) != 0:
 							randomize
 							min
 				"""
-					if random.randrange(0,db['drunksettings']['curse']['randomize']) < dlevel and msg.count(' ') > 2 and dlevel > db['drunksettings']['curse']['min']:
+					if random.randrange(0,db['drunksettings']['curse']['randomize']) < dlevel and msg.count(' ') > 2 and dlevel > db['drunksettings']['curse']['min'] and doDrunk != False:
 						pt=random.randrange(0,len(msg)-1)
 						loopcmsg=0
 						while msg[pt] != ' ' and msg[pt] and loopcmsg < 10:
@@ -73,7 +81,7 @@ while len(db['msgqueue']) != 0:
 						curse=random.choice(db['language']['curses'])
 						msg=msg[:pt]+' '+curse.upper()+' '+msg[pt+1:]
 					namecalled=False
-					if random.randrange(0,db['drunksettings']['names']['randomize']) < dlevel and dlevel > db['drunksettings']['names']['min']:
+					if doDrunk != False and random.randrange(0,db['drunksettings']['names']['randomize']) < dlevel and dlevel > db['drunksettings']['names']['min']:
 						addition=random.choice(db['language']['names']).upper()
 						if msg[-1] == '.': msg=msg[:-1]
 						plu=''
@@ -83,20 +91,20 @@ while len(db['msgqueue']) != 0:
 						elif rannum==3 or rannum==4: addition+plu+', '+msg
 						else: msg=msg+' you '+addition+plu+'!'*random.randrange(1,15)
 						namecalled=True
-					if not namecalled and random.randrange(0,db['drunksettings']['appendages']['randomize']) < dlevel and dlevel > db['drunksettings']['appendages']['min']:
+					if doDrunk != False and not namecalled and random.randrange(0,db['drunksettings']['appendages']['randomize']) < dlevel and dlevel > db['drunksettings']['appendages']['min']:
 						appendage=random.choice(db['language']['appendages']).strip()
 						if appendage[-1]=='-': msg=appendage[:-1]+' '+msg
 						elif appendage[0]=='-': msg=msg+' '+appendage[1:]
 						else: msg=random.choice([msg+' '+appendage+'!'*random.randrange(1,10),appendage+'!'*random.randrange(0,3)+' '+msg])
-					if random.randrange(0,db['drunksettings']['toodrunk']['randomize']) < dlevel and dlevel >= db['drunksettings']['toodrunk']['min']:
+					if doDrunk != False and random.randrange(0,db['drunksettings']['toodrunk']['randomize']) < dlevel and dlevel >= db['drunksettings']['toodrunk']['min']:
 						msg+=random.choice(db['language']['toodrunk'])
 					cedit=0
 					while cedit <=10:
 						cedit+=1
-						if len(msg) > 3 and random.randrange(0,db['drunksettings']['duplicate']['randomize']) < dlevel and dlevel > db['drunksettings']['duplicate']['min']:
+						if doDrunk != False and len(msg) > 3 and random.randrange(0,db['drunksettings']['duplicate']['randomize']) < dlevel and dlevel > db['drunksettings']['duplicate']['min']:
 							pt=random.randrange(0,len(msg)-1)
 							if count_numbers(msg[pt]) == 0 and msg[pt] != ',' and (msg[:pt].count('*') == 0 or msg[pt:].count('*') == 0): msg=msg[:pt]+msg[pt]+msg[pt:]
-					if random.randrange(0,db['drunksettings']['slur']['randomize']) < dlevel and msg.strip().count(' ') != 0 and dlevel > db['drunksettings']['slur']['min']:
+					if doDrunk != False and random.randrange(0,db['drunksettings']['slur']['randomize']) < dlevel and msg.strip().count(' ') != 0 and dlevel > db['drunksettings']['slur']['min']:
 						strep=0
 						enrep=0
 						loopcspc=0
@@ -106,7 +114,7 @@ while len(db['msgqueue']) != 0:
 							enrep=strep+random.randrange(0,3)
 						if count_numbers(msg[strep:enrep]) == 0 and (msg[:strep].count('*') == 0 or msg[enrep:].count('*') == 0): msg=msg[:strep]+msg[enrep:]
 					cedit=1
-					while cedit <= 4:
+					while doDrunk != False and cedit <= 4:
 						cedit+=3
 						if random.randrange(0,db['drunksettings']['insert']['randomize']) < dlevel and dlevel > db['drunksettings']['insert']['min']:
 							randadd=''
@@ -122,6 +130,7 @@ while len(db['msgqueue']) != 0:
 				db['msgqueue'].pop(0)
 				sql.unique_set('data','msgqueue',json.dumps(db['msgqueue']))
 				s.send(mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*','').decode('utf8'))+"\r\n")
+				print mtype+" "+chan+" :"+colordi+h.unescape(msg.replace('*','').decode('utf8'))+"\r\n"
 				#print mtype+" "+chan+" :"+colordi+msg.encode('ascii','ignore')
 				open('logs/interact.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")
 				#open('logs/interactw.log','a').write(time.strftime('%a %b %d %H:%M')+': sent to '+chan+": "+colordi+msg+"\r\n")

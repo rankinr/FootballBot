@@ -37,7 +37,7 @@ for table in tables:
 				#print tv
 				if tv.count('espn-abc') != 0: ntwks.append('ABC')
 				if tv.count('espn-3') != 0: ntwks.append('ESPN3')
-				if tv.count('espn2') != 0: ntwks.append('ESPN2')
+				if tv.count('espn2') != 0 or tv.count('espn-2') != 0: ntwks.append('ESPN2')
 				if tv.count('espn-red') != 0: ntwks.append('ESPN')
 				if tv.count('espnews') != 0: ntwks.append('ESPNEWS')
 				if tv.count('logo-watchespn') != 0: ntwks.append('WATCHESPN')

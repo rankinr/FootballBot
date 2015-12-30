@@ -18,7 +18,7 @@ if user_pref:
 for b,a in db['games_new']['fbs'].iteritems():
 	if b != 'lastupdate':
 		st=str(a['status']).lower()
-		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am edt') == 0 and st.count('pm edt') == 0:
+		if st.count('final') == 0 and st.count('delay') == 0 and st.count('am et') == 0 and st.count('pm et') == 0:
 			ourgame=a
 			t1rk=''
 			t2rk=''
@@ -34,11 +34,16 @@ for b,a in db['games_new']['fbs'].iteritems():
 				ntwks=''
 				closests=b
 				if closests in db['ntwks'] and db['ntwks'][closests].strip() != '': ntwks=' - '+db['ntwks'][closests].strip()
-				if lst != '': lst+=' '+chr(3)+'1,1 . '+chr(3)+' '
+				if lst != '': lst+=' | '
 				(t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()))
 				if (   ((t1rk == '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) < 50) or (t1rk != '' and t2rk != '' and int(t1rk.replace('(','').replace(')','').strip()) > int(t2rk.replace('(','').replace(')','').strip()) and (int(t2rk.replace('(','').replace(')','').strip()) < 25 or int(t1rk.replace('(','').replace(')','').strip())-int(t2rk.replace('(','').replace(')','').strip()) > 15)      )) and int(ourgame['team1score']) >= int(ourgame['team2score'])) or (((      ((t2rk == '' and t1rk != '' and int(t1rk.replace('(','').replace(')','').strip()) < 50) or ((t1rk != '' and t2rk != '' and int(t2rk.replace('(','').replace(')','').strip()) > int(t1rk.replace('(','').replace(')','').strip()) and (  (int(t1rk.replace('(','').replace(')','').strip()) < 25) or (int(t2rk.replace('(','').replace(')','').strip())-int(t1rk.replace('(','').replace(')','').strip()) > 15)  ) ))) and int(ourgame['team2score']) >= int(ourgame['team1score'])))):
 					lst+=chr(3)+'0,4UPSET ALERT: '
 					lste=chr(3)
+					if ourgame['team1'] in irc_flairs: t1=chr(3)+irc_flairs[ourgame['team1']]+chr(3)+chr(3)+'0,4'+t1
+					if ourgame['team2'] in irc_flairs: t2=chr(3)+irc_flairs[ourgame['team2']]+chr(3)+chr(3)+'0,4'+t2
+				else:
+					if ourgame['team1'] in irc_flairs: t1=chr(3)+irc_flairs[ourgame['team1']]+chr(3)+t1
+					if ourgame['team2'] in irc_flairs: t2=chr(3)+irc_flairs[ourgame['team2']]+chr(3)+t2
 				lst+=t1+'-'+t2+' ('+ourgame['status']+ntwks+')'+lste
 if dest == 'footballbot': dest=origin
 if lst != '': ts+='PRIVMSG '+dest+' :'+lst+chr(3)+'\r\n'
@@ -47,5 +52,5 @@ print 'end'
 #s.send(ts)
 lst=lst.strip()
 if lst != '':
-	for msg in splitMessage(lst,400,' . '):
+	for msg in splitMessage(lst,400,' | '):
 		db['msgqueue'].append([msg,msg_dest,msg_type])

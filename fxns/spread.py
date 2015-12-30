@@ -49,24 +49,9 @@ if len(' '.join(params)) != ' '.join(params).count('!'):
 			if 'neutral' in db['games_new']['fbs'][closests]:
 				neutral=db['games_new']['fbs'][closests]['neutral']
 			if not neutral: nident='@ '
-			if closests in db['spread'] and closests in db['games_new']['fbs']:
-				spdisp=db['spread'][closests].strip()
-				spdisp2=spdisp[spdisp.find(' ')+1:]
-				spdisp2=spdisp2[spdisp2.find(' ')+1:].strip()
-				sptext=''
-				if spdisp.count('+') == 1 and spdisp.count('-') == 1:
-					nitext=''
-					if spdisp[0]=='-': 
-						if nident=='@ ': nitext='playing at'
-						else: nitext='over'
-						spval=spdisp[1:spdisp.find(' ')]
-						sptext=origin+': '+db['games_new']['fbs'][closests]['team1']+' is favored by '+spval+' points '+nitext+' '+db['games_new']['fbs'][closests]['team2']+' ('+spdisp2+')'
-					elif spdisp[0]=='+': 
-						if nident=='@ ': nitext='in its home game against'
-						else: nitext='over'
-						spval=spdisp[1:spdisp.find(' ')]
-						sptext=origin+': '+db['games_new']['fbs'][closests]['team2']+' is favored by '+spval+' points '+nitext+' '+db['games_new']['fbs'][closests]['team1']+' ('+spdisp2+')'
-				if sptext=='': sptext=origin+': '+db['games_new']['fbs'][closests]['team1']+' '+nident+db['games_new']['fbs'][closests]['team2']+' '+spdisp+chr(3)
+			if closests in db['games_new']['fbs'] and 'odds' in db['games_new']['fbs'][closests]:
+				spdisp=db['games_new']['fbs'][closests]['odds']
+				sptext=origin+': '+db['games_new']['fbs'][closests]['team1']+' '+nident+db['games_new']['fbs'][closests]['team2']+' - '+spdisp+chr(3)
 				db['msgqueue'].append([sptext,msg_dest,msg_type,'score'])
 		else: db['msgqueue'].append([origin+': Could not find a match for this week.',msg_dest,msg_type,None])
 		#[msg,channel (all main chans), type(privmsg),identifier(None)]
